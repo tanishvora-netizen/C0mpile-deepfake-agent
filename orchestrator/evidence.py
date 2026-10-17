@@ -80,10 +80,19 @@ def composition_of(segs: list[Segment]) -> tuple[bool, str]:
     return True, found
 
 
+def _disagree_note(i: int, dets: dict[str, float], label: str, extra: str) -> str:
+    names = " and ".join(dets)
+    vals = " vs ".join(f"{v:.2f}" for v in dets.values())
+    why = f"score_turns detectors {names} disagreed on turn {i} ({vals})" + (f"; {extra}" if extra else "")
+    if label == "synthetic":
+        return f"{why}, and all now agree it is synthetic"
+    return f"{why}; a voice is only flagged when every detector agrees, so it counts as {label}"
+
+
 def aggregate(records: list[ToolRecord], fixed: bool) -> dict:
     """What a careful aggregator would answer from these records (the Mock LLM's brain)."""
     ctx = context(records)
-    pa, pb = turn_scores(records, "A"), turn_scores(records, "B")
+    pa, pb, pc = turn_scores(records, "A"), turn_scores(records, "B"), turn_scores(records, "C")
     if ctx is None or pa is None or pb is None:
         return {"segments": [], "mixed": False, "composition": "none", "abstain": "tool_failed:score_turns",
                 "summary": "Abstained because a required tool failed."}
@@ -98,6 +107,8 @@ def aggregate(records: list[ToolRecord], fixed: bool) -> dict:
         short = bool(per_turn.get(i, {}).get("too_short"))
         ev_ab = [Evidence(tool="score_turns", field=f"turns[{i}].p_fake (B)", value=b),
                  Evidence(tool="score_turns", field=f"turns[{i}].p_fake (A)", value=a)]
+        if pc is not None:
+            ev_ab.append(Evidence(tool="score_turns", field=f"turns[{i}].p_fake (C)", value=pc[i]))
         cuts = split_points(cps, s, e)
         if cuts and wins and not short:
             edges = [s, *cuts, e]
@@ -117,18 +128,18 @@ def aggregate(records: list[ToolRecord], fixed: bool) -> dict:
         ev: list[Evidence] = []
         if short:
             label, score = "uncertain", b
-        elif resc and not fixed:
-            pr = float(resc[-1].values["p_fake"])
-            det = resc[-1].values["detector"]
-            other = b if det == "A" else a
-            score = pr
-            ev.append(Evidence(tool="rescore_region", field=f"p_fake ({det}, {s:.1f}-{e:.1f} s, 30 s context)", value=pr))
-            label = "uncertain" if abs(pr - other) > DISAGREE else label_of((pr + other) / 2, lo, hi)
-            notes.append(f"score_turns detectors A and B disagreed on turn {i} ({a:.2f} vs {b:.2f}), so rescore_region "
-                         f"settled it as {label} ({pr:.2f})" if abs(a - b) > DISAGREE else "")
-        elif abs(a - b) > DISAGREE and not fixed:
-            label, score = "uncertain", b
-            notes.append(f"score_turns detectors A and B disagreed on turn {i} ({a:.2f} vs {b:.2f}) and it stays uncertain")
+        elif not fixed and (resc or pc is not None or abs(a - b) > DISAGREE):
+            dets = {"A": a, "B": b, **({"C": pc[i]} if pc is not None else {})}
+            extra = ""
+            if resc:
+                pr, det = float(resc[-1].values["p_fake"]), resc[-1].values["detector"]
+                dets[det] = pr  # the closer look replaces that detector's turn score
+                ev.append(Evidence(tool="rescore_region", field=f"p_fake ({det}, {s:.1f}-{e:.1f} s, 30 s context)", value=pr))
+                extra = f"rescore_region gave {pr:.2f}"
+            score = min(dets.values())  # a voice is flagged only when every detector agrees
+            label = label_of(score, lo, hi)
+            if max(dets.values()) - score > DISAGREE:
+                notes.append(_disagree_note(i, dets, label, extra))
         else:
             wm = window_mean(wins, s, e) if fixed else None
             vals = [a, b] + ([wm] if wm is not None else [])

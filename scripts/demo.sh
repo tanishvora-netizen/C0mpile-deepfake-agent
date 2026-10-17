@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # One command to set up and launch the CallGuard demo (mock mode: no GPU, no network, no API keys).
 #
-#   bash scripts/demo.sh            set up everything, start the API and web app, open the demo
-#   bash scripts/demo.sh --check    also run the tests and the end-to-end smoke check first
+#   bash scripts/demo.sh             live detection: 3 local AI-voice detectors + Whisper transcription
+#   bash scripts/demo.sh --check     also run the tests and the end-to-end smoke check first
+#   bash scripts/demo.sh --scripted  no model downloads; example calls use scripted results
 #
 # Needs: uv, node + npm, ffmpeg. On macOS the demo calls are voiced with the built-in `say` voices.
 set -euo pipefail
@@ -13,7 +14,10 @@ cd "$ROOT"
 API_PORT=8000
 WEB_PORT=5173
 DEMO_URL="http://localhost:${WEB_PORT}/demo"
-export MOCK_TOOLS=1 MOCK_LLM=1 MOCK_TWILIO=1 DATA_DIR="$ROOT/var"
+MODE=live
+[[ " $* " == *" --scripted "* ]] && MODE=scripted
+export MOCK_LLM=1 MOCK_TWILIO=1 DATA_DIR="$ROOT/var"
+if [[ $MODE == live ]]; then export MOCK_TOOLS=0; else export MOCK_TOOLS=1; fi
 
 step() { printf '\n\033[1m==> %s\033[0m\n' "$*"; }
 fail() { printf '\n\033[31mError:\033[0m %s\n' "$*" >&2; exit 1; }
@@ -30,7 +34,7 @@ done
 
 step "Installing Python packages (Python 3.11 via uv)"
 uv python install 3.11 >/dev/null
-uv sync -q
+if [[ $MODE == live ]]; then uv sync -q --group detect; else uv sync -q; fi
 
 step "Installing web packages"
 (cd web && npm install --silent --no-audit --no-fund)
@@ -40,11 +44,17 @@ uv run python scripts/make_golden.py >/dev/null
 uv run python scripts/make_demo_audio.py
 uv run python -m baseline_eval.run_eval >/dev/null
 
-if [[ "${1:-}" == "--check" ]]; then
+if [[ $MODE == live ]]; then
+  step "Downloading the 3 detectors and the transcription model (first run only, ~2 GB)"
+  uv run python -c "from workers import detectors; detectors.warm_up()" 2>&1 | grep -v "Loading weights" || true
+  uv run python -c "from faster_whisper import WhisperModel; WhisperModel('base.en', device='cpu', compute_type='int8')"
+fi
+
+if [[ " $* " == *" --check "* ]]; then
   step "Running tests"
-  uv run pytest -q
+  MOCK_TOOLS=1 uv run pytest -q
   step "Running the end-to-end smoke check"
-  bash scripts/smoke.sh
+  MOCK_TOOLS=1 bash scripts/smoke.sh
 fi
 
 step "Starting the API on :$API_PORT and the web app on :$WEB_PORT"

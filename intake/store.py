@@ -136,3 +136,56 @@ def golden_name(clip_id: str) -> str | None:
         return json.loads(GOLDEN_INDEX.read_text()).get(clip_id)
     except (OSError, ValueError):
         return None
+
+
+CALL_GAP_S = 0.6
+
+
+def _decode_16k(data: bytes, filename: str) -> np.ndarray:
+    """Decode any audio file to 16 kHz mono PCM16 samples."""
+    suffix = Path(filename).suffix or ".bin"
+    with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as f:
+        f.write(data)
+        tmp_path = Path(f.name)
+    try:
+        pcm = _run(["ffmpeg", "-v", "error", "-i", str(tmp_path), "-vn", "-ac", "1", "-ar", "16000",
+                    "-f", "s16le", "-acodec", "pcm_s16le", "-"])
+    finally:
+        tmp_path.unlink(missing_ok=True)
+    if len(pcm) < 2 * 16000 * 0.5:
+        raise IntakeError(f"{filename} has less than half a second of audio")
+    return np.frombuffer(pcm, dtype="<i2")
+
+
+def ingest_call(parts: list[tuple[bytes, str]]) -> tuple[ClipMeta, list[dict]]:
+    """Join several recordings into one call, in order, with a short silence between them.
+
+    Returns the stored clip and where each file sits in it ({name, start, end}); the source list is also
+    saved next to the clip so the context tool can treat each file as its own voice.
+    """
+    if not parts:
+        raise IntakeError("add at least one audio file")
+    gap = np.zeros(int(CALL_GAP_S * 16000), dtype="<i2")
+    chunks: list[np.ndarray] = []
+    sources: list[dict] = []
+    t = 0.0
+    for i, (data, name) in enumerate(parts):
+        x = _decode_16k(data, name)
+        if i:
+            chunks.append(gap)
+            t += CALL_GAP_S
+        chunks.append(x)
+        sources.append({"name": name, "start": round(t, 3), "end": round(t + len(x) / 16000, 3)})
+        t += len(x) / 16000
+    meta = _store(np.concatenate(chunks).tobytes(), 16000)
+    (_clip_dir(meta.clip_id) / "sources.json").write_text(json.dumps(sources))
+    return meta, sources
+
+
+def sources(clip_id: str) -> list[dict]:
+    """The files a joined call was built from ({name, start, end}); empty for single uploads."""
+    path = _clip_dir(clip_id) / "sources.json"
+    try:
+        return json.loads(path.read_text())
+    except (OSError, ValueError):
+        return []

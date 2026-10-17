@@ -1,6 +1,6 @@
 import type {
   AnalysisResult, CaseEvent, CaseState, CaseView, ChainStatus, ClipMeta, GoldenClip, Mode,
-  Packet, TraceEvent, Transfer, Action, TranscriptLine,
+  Packet, TraceEvent, Transfer, Action, TranscriptLine, Health, CallInfo, CallSource,
 } from './types'
 import g3Trace from './fixtures/g3_trace.json'
 import g3Case from './fixtures/g3_case.json'
@@ -38,7 +38,6 @@ const fx = {
   caseState: 'OPEN' as CaseState,
   transfers: new Map<string, Transfer>(),
   n: 0,
-  tampered: false,
 }
 
 // ---- clips ----
@@ -80,6 +79,53 @@ export async function uploadClip(file: File): Promise<ClipMeta> {
   const fd = new FormData()
   fd.append('file', file, file.name)
   return http<ClipMeta>('/clips', { method: 'POST', body: fd })
+}
+
+// ---- health + multi-file calls ----
+export async function getHealth(): Promise<Health> {
+  if (isFixtures()) return { detection: 'scripted', detectors: [], transcription: false }
+  return http<Health>('/health')
+}
+
+/** Reads a readable message out of a failed response (FastAPI puts it in `detail`). */
+async function failMessage(r: Response): Promise<string> {
+  const text = await r.text().catch(() => '')
+  try {
+    const d = (JSON.parse(text) as { detail?: unknown }).detail
+    if (typeof d === 'string') return d
+    if (Array.isArray(d)) return d.map((x) => asObj(x).msg ?? '').filter(Boolean).join('; ')
+  } catch {
+    /* not JSON */
+  }
+  return text.slice(0, 200)
+}
+
+/** Joins the files (in order) into one call. Each file becomes one voice source. */
+export async function createCall(files: File[]): Promise<CallInfo> {
+  if (isFixtures()) {
+    await sleep(500)
+    return { clip_id: 'g3', duration_s: 7, sources: [] }
+  }
+  const fd = new FormData()
+  for (const f of files) fd.append('files', f, f.name)
+  const r = await fetch(`${API_BASE}/calls`, { method: 'POST', body: fd })
+  if (r.status === 404 || r.status === 405) {
+    throw new Error("This CallGuard server can't accept uploaded calls yet.")
+  }
+  if (!r.ok) {
+    const msg = await failMessage(r)
+    throw new Error(r.status === 422 ? `One of the files could not be read as audio${msg ? ` (${msg})` : ''}.` : `The upload failed (${r.status}).`)
+  }
+  return (await r.json()) as CallInfo
+}
+
+export async function getSources(clipId: string): Promise<CallSource[]> {
+  if (isFixtures()) return []
+  try {
+    return await http<CallSource[]>(`/clips/${clipId}/sources`)
+  } catch {
+    return []
+  }
 }
 
 // ---- analysis ----
@@ -195,14 +241,14 @@ export async function getCase(caseId: string): Promise<CaseView> {
   if (isFixtures()) {
     return {
       ...fxCase.case, state: fx.caseState,
-      chain: fx.tampered ? { ok: false, bad_seq: 3 } : fxCase.case.chain,
+      chain: fxCase.case.chain,
     }
   }
   return toCaseView(await http<unknown>(`/cases/${caseId}`), caseId)
 }
 
 export async function getPacket(caseId: string): Promise<Packet> {
-  if (isFixtures()) return fx.tampered ? { ...fxCase.packet, chain: { ok: false, bad_seq: 3 } } : fxCase.packet
+  if (isFixtures()) return fxCase.packet
   const r = asObj(await http<unknown>(`/cases/${caseId}/packet`))
   const str = (v: unknown) => (typeof v === 'string' ? v : v == null ? '' : JSON.stringify(v, null, 2))
   return {
@@ -210,16 +256,6 @@ export async function getPacket(caseId: string): Promise<Packet> {
     sar_draft: str(r.sar_draft),
     chain: r.chain ? (r.chain as ChainStatus) : null,
   }
-}
-
-/** Demo only: alters a stored audit entry so the hash chain breaks. */
-export async function tamperCase(caseId: string): Promise<void> {
-  if (isFixtures()) {
-    await sleep(300)
-    fx.tampered = true
-    return
-  }
-  await post<unknown>('/dev/tamper', { case_id: caseId })
 }
 
 export async function simulateReply(caseId: string, reply: 'YES' | 'NO'): Promise<void> {

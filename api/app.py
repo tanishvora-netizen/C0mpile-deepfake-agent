@@ -152,11 +152,80 @@ def get_clip_audio(clip_id: str):
 
 @app.get("/clips/{clip_id}/transcript")
 def get_clip_transcript(clip_id: str):
+    """What each voice said: fixture captions for example calls, Whisper for uploads in live mode."""
     name = next((n for n, c in GOLDEN.items() if c == clip_id), None)
     fx = ROOT / "contracts" / "fixtures" / "transcripts" / f"{name}.json" if name else None
-    if fx is None or not fx.exists():
-        return []
-    return json.loads(fx.read_text())
+    if fx is not None and fx.exists() and _detection_mode() == "scripted":
+        return json.loads(fx.read_text())
+    if not _transcription_available():
+        return json.loads(fx.read_text()) if fx is not None and fx.exists() else []
+    intake = _lazy("intake.store")
+    try:
+        meta = intake.get(clip_id)
+    except KeyError as exc:
+        raise HTTPException(404, f"unknown clip {clip_id}") from exc
+    cache = Path(meta.paths["16k"]).parent / "transcript.json"
+    if cache.exists():
+        return json.loads(cache.read_text())
+    from policy_actions import claim
+
+    parts = intake.sources(clip_id) or [{"name": None, "start": 0.0, "end": meta.duration_s}]
+    lines = []
+    for k, src in enumerate(parts):
+        text = claim.transcribe(clip_id, src["start"], src["end"])
+        if text:
+            who = f"Voice {k + 1}" + (f" ({src['name']})" if src.get("name") else "")
+            lines.append({"start": src["start"], "end": src["end"], "speaker": f"Voice {k + 1}", "who": who, "text": text})
+    cache.write_text(json.dumps(lines))
+    return lines
+
+
+@app.get("/clips/{clip_id}/sources")
+def get_clip_sources(clip_id: str):
+    return _lazy("intake.store").sources(clip_id)
+
+
+@app.post("/calls")
+async def post_call(files: list[UploadFile]):
+    """Join one or more recordings, in order, into a single call to check voice by voice."""
+    intake = _lazy("intake.store")
+    parts = [(await f.read(), f.filename or f"part{i + 1}.wav") for i, f in enumerate(files)]
+    try:
+        meta, sources = await asyncio.to_thread(intake.ingest_call, parts)
+    except ValueError as exc:  # IntakeError subclasses ValueError
+        raise HTTPException(422, str(exc)) from exc
+    return {"clip_id": meta.clip_id, "duration_s": meta.duration_s, "sources": sources}
+
+
+def _detection_mode() -> str:
+    if os.environ.get("MOCK_TOOLS", "1") != "0":
+        return "scripted"
+    try:
+        from workers import detectors
+    except ImportError:
+        return "scripted"
+    return "live" if detectors.available() else "scripted"
+
+
+def _transcription_available() -> bool:
+    if os.environ.get("MOCK_TOOLS", "1") != "0":
+        return False
+    try:
+        import faster_whisper  # noqa: F401
+    except ImportError:
+        return False
+    return True
+
+
+@app.get("/health")
+def health():
+    mode = _detection_mode()
+    dets = []
+    if mode == "live":
+        from workers import detectors
+
+        dets = [{"id": k, "model": v} for k, v in detectors.MODELS.items()]
+    return {"detection": mode, "detectors": dets, "transcription": _transcription_available()}
 
 
 # ---- analysis jobs ---------------------------------------------------------------------------

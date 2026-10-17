@@ -39,6 +39,9 @@ def _golden_name(clip_id: str) -> str | None:
     return None
 
 
+_WHISPER = None  # faster-whisper model, loaded on first real transcription
+
+
 def transcribe(clip_id: str, start: float, end: float) -> str:
     """Text of one segment. Mock mode serves fixtures; real mode uses faster-whisper if installed."""
     if os.environ.get("MOCK_TOOLS", "1") != "0":
@@ -55,9 +58,11 @@ def transcribe(clip_id: str, start: float, end: float) -> str:
 
         from intake import store as intake_store
 
+        global _WHISPER
+        if _WHISPER is None:
+            _WHISPER = WhisperModel("base.en", device="cpu", compute_type="int8")
         path = intake_store.get(clip_id).paths["16k"]
-        model = WhisperModel("base", device="cpu", compute_type="int8")
-        segs, _ = model.transcribe(path, clip_timestamps=[start, end])
+        segs, _ = _WHISPER.transcribe(path, clip_timestamps=[start, end], vad_filter=False)
         return " ".join(s.text.strip() for s in segs).strip()
     except Exception as exc:  # noqa: BLE001
         jlog("transcribe_failed", clip_id=clip_id, error=str(exc)[:200])

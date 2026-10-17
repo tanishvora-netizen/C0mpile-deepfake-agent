@@ -39,6 +39,13 @@ def mock_tools() -> bool:
     return os.environ.get("MOCK_TOOLS", "1") != "0"
 
 
+def backend() -> str:
+    """'mock' (fixtures), 'local' (real detectors in-process, default otherwise) or 'http' (TOOLS_URL workers)."""
+    if mock_tools():
+        return "mock"
+    return "http" if os.environ.get("TOOLS_BACKEND", "local") == "http" else "local"
+
+
 def list_cards() -> list[ToolCard]:
     return list(CARDS)
 
@@ -201,12 +208,20 @@ def call_tool(name: str, args: dict) -> ToolRecord:
         err = validate_args(card, args)
         if err:
             return _record(name, clip_id, _params(args), "invalid_input", err, card.version)
-        ck = hashlib.sha256(canonical_json([clip_id, name, card.version, _params(args), mock_tools()]).encode()).hexdigest()
+        ck = hashlib.sha256(canonical_json([clip_id, name, card.version, _params(args), backend()]).encode()).hexdigest()
         with _lock:
             hit = _cache.get(ck)
         if hit is not None:
             return hit.model_copy(deep=True)
-        rec = _mock_call(name, clip_id, args) if mock_tools() else _remote_call(name, clip_id, args)
+        mode = backend()
+        if mode == "mock":
+            rec = _mock_call(name, clip_id, args)
+        elif mode == "local":
+            from tools_manager import local_tools
+
+            rec = local_tools.call(name, clip_id, _params(args), card.version)
+        else:
+            rec = _remote_call(name, clip_id, args)
         if rec.status == "ok":
             with _lock:
                 _cache[ck] = rec

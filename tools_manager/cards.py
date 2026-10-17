@@ -6,7 +6,8 @@ from contracts.models import ToolCard
 VERSION = "0.1.0"
 
 _CLIP = {"type": "string", "description": "clip_id returned by intake"}
-_DET = {"type": "string", "enum": ["A", "B"], "description": "A = AntiDeepfake, B = XLS-R + SLS"}
+_DET = {"type": "string", "enum": ["A", "B", "C"],
+        "description": "Independent AI-voice detectors. A and B always; C as well when live detection runs locally."}
 _T = {"type": "number", "minimum": 0}
 
 
@@ -42,7 +43,7 @@ CARDS: list[ToolCard] = [
     ToolCard(
         name="score_turns",
         version=VERSION,
-        description="p_fake per speaker turn from one detector (A or B), plus a whole-clip p_fake.",
+        description="p_fake per speaker turn from one detector (A, B or C), plus a whole-clip p_fake.",
         args_schema=_args({"detector": _DET}, ["detector"]),
         values_schema={
             "type": "object",

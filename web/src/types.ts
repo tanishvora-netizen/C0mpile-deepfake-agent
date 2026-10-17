@@ -108,3 +108,21 @@ export interface Transfer {
   reason?: string | null
   token?: string
 }
+
+export interface Health {
+  detection: 'live' | 'scripted'
+  detectors: { id: string; model: string }[]
+  transcription: boolean
+}
+
+export interface CallSource {
+  name: string
+  start: number
+  end: number
+}
+
+export interface CallInfo {
+  clip_id: string
+  duration_s: number
+  sources: CallSource[]
+}

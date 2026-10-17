@@ -3,7 +3,7 @@ import Console from './pages/Console'
 import Bank from './pages/Bank'
 import Approve from './pages/Approve'
 import Eval from './pages/Eval'
-import Demo from './pages/Demo'
+import Home from './pages/Home'
 import { isFixtures } from './api'
 
 const TABS = [
@@ -33,8 +33,8 @@ function AnalystShell() {
               </NavLink>
             ))}
           </nav>
-          <NavLink to={{ pathname: '/demo', search }} className="text-sm font-medium text-slate-500 hover:text-slate-900">
-            ← Back to demo
+          <NavLink to={{ pathname: '/', search }} className="text-sm font-medium text-slate-500 hover:text-slate-900">
+            ← Back to CallGuard
           </NavLink>
           {isFixtures() && (
             <span className="ml-auto rounded bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900">fixtures mode</span>
@@ -47,7 +47,7 @@ function AnalystShell() {
           <Route path="/bank" element={<Bank />} />
           <Route path="/approve/:token" element={<Approve />} />
           <Route path="/eval" element={<Eval />} />
-          <Route path="*" element={<Navigate to={{ pathname: '/demo', search }} replace />} />
+          <Route path="*" element={<Navigate to={{ pathname: '/console', search }} replace />} />
         </Routes>
       </main>
     </div>
@@ -58,8 +58,8 @@ export default function App() {
   const { search } = useLocation()
   return (
     <Routes>
-      <Route path="/" element={<Navigate to={{ pathname: '/demo', search }} replace />} />
-      <Route path="/demo" element={<Demo />} />
+      <Route path="/" element={<Home />} />
+      <Route path="/demo" element={<Navigate to={{ pathname: '/', search }} replace />} />
       <Route path="*" element={<AnalystShell />} />
     </Routes>
   )

@@ -158,6 +158,8 @@ def _prelude(run: _Run, messages: list[dict]) -> AnalysisResult | None:
     if ctx.status != "ok":
         return run.abstain("tool_failed:get_context")
     calls = [("score_turns", {"detector": "A"}, "c2"), ("score_turns", {"detector": "B"}, "c3")]
+    if manager.backend() == "local":  # live detection adds a third independent detector
+        calls.append(("score_turns", {"detector": "C"}, "c4"))
     recs = _step_exec(run, messages, calls)
     if any(r.status != "ok" for r in recs):
         return run.abstain("tool_failed:score_turns")

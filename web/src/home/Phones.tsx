@@ -1,19 +1,22 @@
 import type { CaseState, Transfer } from '../types'
-import { HELD_COPY } from '../pages/Bank'
 import { Phone, TypingDots } from './bits'
 import { Icon } from './Icons'
-import { usd } from './plain'
+import { usd } from './lib'
 
 export const START_BALANCE = 48250
 export const FALLBACK_SMS = 'Bay Credit Union: Did you just call Grandma asking for money? Reply YES or NO.'
 export const PAYEE = 'New payee — Wells transfer'
+const HELD_COPY_VERIFY = (who: string) => `Paused for your safety. We could not confirm the caller was ${who}. We've asked your trusted contact to approve this transfer.`
+const HELD_COPY_GENERIC = "Paused for your safety. A voice on your recent call sounded AI-generated. We've asked your trusted contact to approve this transfer."
 export const AMOUNT = 9500
 
 const pulse = 'pulse-ring'
 
-export default function StepMoney({
-  ready, error, smsBody, smsSent, reply, caseState, transfer, busy, onReply, onSend, onDecide,
+export default function Phones({
+  hasVerify, contactName, ready, error, smsBody, smsSent, reply, caseState, transfer, busy, onReply, onSend, onDecide,
 }: {
+  hasVerify: boolean
+  contactName: string
   ready: boolean
   error: string | null
   smsBody: string
@@ -35,9 +38,10 @@ export default function StepMoney({
   return (
     <div>
       {error && <p className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-lg text-red-800">{error}</p>}
-      <div className="grid gap-8 md:grid-cols-3">
-        {/* (a) Jake's real phone */}
-        <Phone caption="Jake's real phone" note="The saved number — not the caller's">
+      <div className={`grid gap-8 ${hasVerify ? 'md:grid-cols-3' : 'mx-auto max-w-[760px] md:grid-cols-2'}`}>
+        {/* (a) the saved contact's real phone */}
+        {hasVerify && (
+        <Phone caption={`${contactName}'s real phone`} note="The saved number — not the caller's">
           <div className="flex items-center gap-3 border-b border-slate-100 bg-slate-50 px-4 pb-3 pt-8">
             <span className="grid h-10 w-10 place-items-center rounded-full bg-accent text-white"><Icon name="bank" className="h-5 w-5" /></span>
             <div>
@@ -48,7 +52,7 @@ export default function StepMoney({
           <div className="flex flex-1 flex-col gap-3 p-4">
             {ready && !smsSent ? (
               <div className="grid flex-1 place-items-center text-center text-lg text-slate-400">
-                No text needed — nothing suspicious on this call.
+                No text needed.
               </div>
             ) : ready ? (
               <div className="rise max-w-[92%] rounded-3xl rounded-bl-md bg-slate-100 px-4 py-3 text-[18px] leading-snug text-slate-900">
@@ -66,7 +70,7 @@ export default function StepMoney({
                   reply === 'NO' ? 'bg-red-50 text-red-800' : 'bg-green-50 text-green-800'
                 }`}
               >
-                {reply === 'NO' ? "Jake says it wasn't him" : 'Jake says it was him'}
+                {reply === 'NO' ? `${contactName} says it wasn't them` : `${contactName} says it was them`}
                 {' → '}
                 <span className="tracking-wide">{caseState && caseState !== 'OPEN' && caseState !== 'VERIFYING' ? caseState : reply === 'NO' ? 'CONTRADICTED' : 'VERIFIED'}</span>
               </div>
@@ -89,6 +93,7 @@ export default function StepMoney({
             )}
           </div>
         </Phone>
+        )}
 
         {/* (b) Grandma's banking app */}
         <Phone caption="Grandma's banking app" note="Her account at the credit union">
@@ -108,7 +113,7 @@ export default function StepMoney({
                   type="button" disabled={!ready || busy} onClick={onSend}
                   className={`mt-auto rounded-2xl bg-accent px-4 py-4 text-xl font-bold leading-snug text-white transition hover:bg-indigo-800 disabled:opacity-40 ${nextAction === 'send' ? pulse : ''}`}
                 >
-                  Grandma sends {usd(AMOUNT)} to the “lawyer”
+                  Send {usd(AMOUNT)}
                 </button>
               </>
             ) : (
@@ -127,7 +132,7 @@ export default function StepMoney({
                       <Icon name="pause" className="h-8 w-8" fill />
                       <span className="text-[36px] font-extrabold leading-none tracking-tight">HELD</span>
                     </div>
-                    <p className="mt-3 text-[18px] leading-snug text-amber-950">{transfer.reason ?? HELD_COPY}</p>
+                    <p className="mt-3 text-[18px] leading-snug text-amber-950">{transfer.reason ?? (hasVerify ? HELD_COPY_VERIFY(contactName) : HELD_COPY_GENERIC)}</p>
                   </div>
                 )}
                 {transfer.state === 'DECLINED' && (
@@ -166,7 +171,7 @@ export default function StepMoney({
                 <div className="text-lg text-slate-700">to {transfer.payee}</div>
               </div>
               <div className="rounded-2xl bg-amber-50 px-4 py-3 text-base leading-snug text-amber-950">
-                <b>Why it is held:</b> we could not confirm the caller was Jake.
+                <b>Why it is held:</b> {hasVerify ? `we could not confirm the caller was ${contactName}.` : 'a voice on the call sounded AI-generated.'}
               </div>
               {held ? (
                 <div className="mt-auto grid grid-cols-2 gap-3">

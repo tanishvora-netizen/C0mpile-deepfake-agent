@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import type { Tone } from './plain'
+import type { Tone } from './lib'
 import { Icon, type IconName } from './Icons'
 
 export const TONE_TILE: Record<Tone, string> = {
