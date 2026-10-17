@@ -5,6 +5,16 @@ import type { Transfer } from '../types'
 import { Button, ErrorNote } from '../components/ui'
 
 const START_BALANCE = 48250
+const SAVED_TRANSFER_KEY = 'callguard.bank.transfer'
+
+function loadSavedTransfer(): Transfer | null {
+  try {
+    const raw = sessionStorage.getItem(SAVED_TRANSFER_KEY)
+    return raw ? (JSON.parse(raw) as Transfer) : null
+  } catch {
+    return null
+  }
+}
 const usd = (n: number) => n.toLocaleString('en-US', { style: 'currency', currency: 'USD' })
 
 export const HELD_COPY =
@@ -35,12 +45,30 @@ export default function Bank() {
   const [payee, setPayee] = useState('New payee — Wells transfer')
   const [amount, setAmount] = useState('9500')
   const [newPayee, setNewPayee] = useState(true)
-  const [transfer, setTransfer] = useState<Transfer | null>(null)
+  const [transfer, setTransfer] = useState<Transfer | null>(loadSavedTransfer)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const released = transfer?.state === 'RELEASED' ? transfer.amount : 0
   const balance = START_BALANCE - released
+
+  // Keep the transfer across navigation (e.g. after using the approve page in this tab).
+  useEffect(() => {
+    try {
+      if (transfer) sessionStorage.setItem(SAVED_TRANSFER_KEY, JSON.stringify(transfer))
+    } catch {
+      // storage unavailable: the screen still works for this visit
+    }
+  }, [transfer])
+
+  // Refresh a restored transfer once on mount so a decision made elsewhere shows up.
+  const restoredId = useState(() => transfer?.id)[0]
+  useEffect(() => {
+    if (!restoredId) return
+    getTransfer(restoredId)
+      .then((t) => setTransfer((prev) => ({ ...t, token: t.token ?? prev?.token })))
+      .catch(() => undefined)
+  }, [restoredId])
 
   // Poll until the transfer reaches a final state.
   const id = transfer?.id
@@ -48,7 +76,9 @@ export default function Bank() {
   useEffect(() => {
     if (!id || state === 'RELEASED' || state === 'DECLINED') return
     const timer = setInterval(() => {
-      getTransfer(id).then(setTransfer).catch(() => undefined)
+      getTransfer(id)
+        .then((t) => setTransfer((prev) => ({ ...t, token: t.token ?? prev?.token })))
+        .catch(() => undefined)
     }, 2000)
     return () => clearInterval(timer)
   }, [id, state])

@@ -14,7 +14,7 @@ function parse(raw: unknown): { provenance: string | null; rows: Row[]; note: st
     const arr = ['rows', 'results', 'systems', 'table'].map((k) => o[k]).find(Array.isArray)
     if (Array.isArray(arr)) rows = arr.map(asObj)
     else {
-      const holder = asObj(o.systems ?? o.results ?? o.metrics ?? o)
+      const holder = asObj(o.summary ?? o.systems ?? o.results ?? o.metrics ?? o)
       rows = Object.entries(holder)
         .filter(([k, v]) => v && typeof v === 'object' && !Array.isArray(v) && !['provenance', 'meta', 'note'].includes(k))
         .map(([k, v]) => ({ system: k, ...asObj(v) }))
