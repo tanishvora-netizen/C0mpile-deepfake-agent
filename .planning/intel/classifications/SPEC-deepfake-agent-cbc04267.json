@@ -1,0 +1,13 @@
+{
+  "source_path": "/Users/tanishvora/Coding/deepfake-agent/SPEC-deepfake-agent.md",
+  "type": "SPEC",
+  "confidence": "high",
+  "manifest_override": false,
+  "title": "CallGuard Build Spec: Agentic Mixed-Authenticity Detection + Scam Interrupt",
+  "summary": "Build spec for CallGuard, which localizes cloned speaker turns in calls, texts the claimed contact, and holds new-payee transfers pending approval.",
+  "scope": ["CallGuard", "speaker-turn authenticity detection", "AntiDeepfake detector", "XLS-R + SLS detector", "context tools", "boundary detection", "orchestrator agent", "tools manager", "policy and actions", "Twilio verification", "mock bank transfer hold", "case store", "case writer", "console frontend", "eval harness", "API gateway"],
+  "cross_refs": ["CLAUDE.md", "CONTRACT_CHANGE.md"],
+  "locked": false,
+  "precedence": null,
+  "notes": ""
+}
