@@ -50,11 +50,11 @@
   "mixed": true,
   "composition": "speaker_handoff",
   "abstain": null,
-  "summary": "score_turns detectors A and B disagreed on turn 0 (0.42 vs 0.93), so rescore_region settled it as synthetic (0.87). Segments: S1 0.0-3.0 s synthetic; S2 3.0-7.0 s bona_fide. find_boundaries shows p_fake and speaker moving at the join, a speaker handoff.",
+  "summary": "score_turns detectors A and B agree on every turn. Segments: S1 0.0-3.0 s synthetic; S2 3.0-7.0 s bona_fide. find_boundaries shows p_fake and speaker moving at the join, a speaker handoff.",
   "trace_id": "fixture-g3",
   "usage": {
     "input_tokens": 2264,
-    "output_tokens": 272,
+    "output_tokens": 256,
     "tool_calls": 5,
     "seconds": 0.4,
     "usd": 0.0,

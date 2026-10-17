@@ -52,7 +52,7 @@
   {
     "name": "score_turns",
     "version": "0.1.0",
-    "description": "p_fake per speaker turn from one detector (A or B), plus a whole-clip p_fake.",
+    "description": "p_fake per speaker turn from one detector (A, B or C), plus a whole-clip p_fake.",
     "args_schema": {
       "type": "object",
       "properties": {
@@ -64,9 +64,10 @@
           "type": "string",
           "enum": [
             "A",
-            "B"
+            "B",
+            "C"
           ],
-          "description": "A = AntiDeepfake, B = XLS-R + SLS"
+          "description": "Independent AI-voice detectors. A and B always; C as well when live detection runs locally."
         }
       },
       "required": [
@@ -128,9 +129,10 @@
           "type": "string",
           "enum": [
             "A",
-            "B"
+            "B",
+            "C"
           ],
-          "description": "A = AntiDeepfake, B = XLS-R + SLS"
+          "description": "Independent AI-voice detectors. A and B always; C as well when live detection runs locally."
         },
         "start": {
           "type": "number",
@@ -209,9 +211,10 @@
           "type": "string",
           "enum": [
             "A",
-            "B"
+            "B",
+            "C"
           ],
-          "description": "A = AntiDeepfake, B = XLS-R + SLS"
+          "description": "Independent AI-voice detectors. A and B always; C as well when live detection runs locally."
         },
         "start": {
           "type": "number",

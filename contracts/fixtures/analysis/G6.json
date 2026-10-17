@@ -8,7 +8,7 @@
       "end": 3.0,
       "speaker": "S1",
       "label": "synthetic",
-      "tool_score": 0.81,
+      "tool_score": 0.62,
       "evidence": [
         {
           "tool": "rescore_region",
@@ -50,11 +50,11 @@
   "mixed": true,
   "composition": "speaker_handoff",
   "abstain": null,
-  "summary": "score_turns detectors A and B disagreed on turn 0 (0.30 vs 0.62), so rescore_region settled it as synthetic (0.81). Segments: S1 0.0-3.0 s synthetic; S2 3.0-7.0 s bona_fide. find_boundaries shows p_fake and speaker moving at the join, a speaker handoff.",
+  "summary": "score_turns detectors A and B agree on every turn. Segments: S1 0.0-3.0 s synthetic; S2 3.0-7.0 s bona_fide. find_boundaries shows p_fake and speaker moving at the join, a speaker handoff.",
   "trace_id": "fixture-g6",
   "usage": {
     "input_tokens": 2286,
-    "output_tokens": 271,
+    "output_tokens": 255,
     "tool_calls": 5,
     "seconds": 0.4,
     "usd": 0.0,
