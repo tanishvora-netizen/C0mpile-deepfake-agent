@@ -67,8 +67,8 @@ SPECS: dict[str, dict] = {
 }
 
 TRANSCRIPT_G3 = [
-    {"start": 0, "end": 3, "text": "Grandma, it's Jake, I'm in trouble"},
-    {"start": 3, "end": 7, "text": "This is Attorney Mark Reyes. Jake is being held and I need a $9,500 wire today to post bail."},
+    {"start": 0, "end": 3, "text": "Grandma, it's Jake. I'm in trouble."},
+    {"start": 3, "end": 7, "text": "I'm Jake's lawyer. Wire $9,500 for bail today."},
 ]
 
 

@@ -1,0 +1,16 @@
+[
+  {
+    "start": 0.0,
+    "end": 3.0,
+    "speaker": "S1",
+    "who": "Caller says they're Jake",
+    "text": "Grandma, it's Jake. I'm in trouble."
+  },
+  {
+    "start": 3.0,
+    "end": 7.0,
+    "speaker": "S2",
+    "who": "Second voice: 'Lawyer'",
+    "text": "I'm Jake's lawyer. Wire $9,500 for bail today."
+  }
+]

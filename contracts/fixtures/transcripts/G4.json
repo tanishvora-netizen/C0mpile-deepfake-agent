@@ -1,0 +1,16 @@
+[
+  {
+    "start": 0.0,
+    "end": 3.5,
+    "speaker": "S1",
+    "who": "Jake",
+    "text": "Hi Grandma, it's Jake. Here's my friend Sam."
+  },
+  {
+    "start": 3.5,
+    "end": 7.0,
+    "speaker": "S2",
+    "who": "Jake's friend Sam",
+    "text": "Hi! So nice to meet you. See you on Sunday."
+  }
+]

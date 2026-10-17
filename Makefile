@@ -8,6 +8,7 @@ PY = uv run
 
 golden:
 	$(PY) python scripts/make_golden.py
+	$(PY) python scripts/make_demo_audio.py
 
 api:
 	$(PY) uvicorn api.app:app --port 8000 --reload

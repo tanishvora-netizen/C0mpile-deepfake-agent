@@ -1,0 +1,23 @@
+[
+  {
+    "start": 0.0,
+    "end": 2.5,
+    "speaker": "S1",
+    "who": "Jake",
+    "text": "Hi Grandma, it's Jake."
+  },
+  {
+    "start": 2.5,
+    "end": 5.5,
+    "speaker": "S1",
+    "who": "Inserted voice ('Jake')",
+    "text": "Please wire money to my new account today."
+  },
+  {
+    "start": 5.5,
+    "end": 8.0,
+    "speaker": "S1",
+    "who": "Jake",
+    "text": "Anyway, see you Sunday. Love you!"
+  }
+]

@@ -1,12 +1,16 @@
 [
   {
-    "start": 0,
-    "end": 3,
-    "text": "Grandma, it's Jake, I'm in trouble"
+    "start": 0.0,
+    "end": 3.0,
+    "speaker": "S1",
+    "who": "Caller says they're Jake",
+    "text": "Grandma, it's Jake. I'm in trouble."
   },
   {
-    "start": 3,
-    "end": 7,
-    "text": "This is Attorney Mark Reyes. Jake is being held and I need a $9,500 wire today to post bail."
+    "start": 3.0,
+    "end": 7.0,
+    "speaker": "S2",
+    "who": "Second voice: 'Lawyer'",
+    "text": "I'm Jake's lawyer. Wire $9,500 for bail today."
   }
 ]

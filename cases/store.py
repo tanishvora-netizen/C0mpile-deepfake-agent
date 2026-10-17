@@ -184,3 +184,25 @@ def verify_chain(case_id: str) -> dict:
             return {"ok": False, "bad_seq": ev.seq}
         prev = ev.hash
     return {"ok": True, "bad_seq": None}
+
+
+def tamper_for_demo(case_id: str) -> int:
+    """Demo only: rewrite one stored event's payload without re-hashing, so verify_chain flags it.
+
+    Targets the held-transfer event when there is one (an insider "shrinking" the amount), otherwise
+    the analysis verdict. Returns the tampered seq.
+    """
+    evs = events(case_id)
+    if not evs:
+        raise KeyError(case_id)
+    target = next((e for e in evs if e.type.startswith("transfer")), None)
+    target = target or next((e for e in evs if e.type == "analysis_done"), evs[-1])
+    payload = dict(target.payload)
+    if "amount" in payload:
+        payload["amount"] = 95
+    else:
+        payload["tampered"] = "verdict changed to bona_fide"
+    with _connect() as con:
+        con.execute("UPDATE events SET payload_json=? WHERE case_id=? AND seq=?",
+                    (json.dumps(payload), case_id, target.seq))
+    return target.seq

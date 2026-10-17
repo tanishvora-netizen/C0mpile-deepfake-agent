@@ -17,7 +17,7 @@ from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, Response, StreamingResponse
+from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
 from pydantic import BaseModel
 
 from cases import store, writer
@@ -114,11 +114,49 @@ async def post_clip(file: UploadFile):
     return meta.model_dump()
 
 
+GOLDEN_INFO = {
+    "G1": ("Normal call", "Grandma's real grandson Jake calls to say hi."),
+    "G2": ("Fully cloned call", "Every word is an AI clone of Jake asking for money."),
+    "G3": ("Grandparent scam", "A cloned 'Jake' opens the call, then a real 'lawyer' asks for $9,500."),
+    "G4": ("Two real people", "Jake hands the phone to his real friend. Nothing should be flagged."),
+    "G5": ("Hidden clone insert", "A 3-second cloned sentence is spliced into a real call."),
+    "G6": ("Scam call with music", "The grandparent scam with background music on the line."),
+}
+
+
 @app.get("/clips/golden")
 def get_golden():
     if not GOLDEN:
         _load_golden()
-    return [{"name": n, "clip_id": c} for n, c in sorted(GOLDEN.items())]
+    intake = _lazy("intake.store")
+    out = []
+    for n, c in sorted(GOLDEN.items()):
+        title, desc = GOLDEN_INFO.get(n, (n, ""))
+        try:
+            duration = intake.get(c).duration_s
+        except Exception:  # noqa: BLE001
+            duration = None
+        out.append({"name": n, "clip_id": c, "title": title, "description": desc, "duration_s": duration})
+    return out
+
+
+@app.get("/clips/{clip_id}/audio")
+def get_clip_audio(clip_id: str):
+    intake = _lazy("intake.store")
+    try:
+        path = Path(intake.get(clip_id).paths["orig"])
+    except KeyError as exc:
+        raise HTTPException(404, f"unknown clip {clip_id}") from exc
+    return FileResponse(path, media_type="audio/wav")
+
+
+@app.get("/clips/{clip_id}/transcript")
+def get_clip_transcript(clip_id: str):
+    name = next((n for n, c in GOLDEN.items() if c == clip_id), None)
+    fx = ROOT / "contracts" / "fixtures" / "transcripts" / f"{name}.json" if name else None
+    if fx is None or not fx.exists():
+        return []
+    return json.loads(fx.read_text())
 
 
 # ---- analysis jobs ---------------------------------------------------------------------------
@@ -318,6 +356,22 @@ def simulate_reply(req: ReplyReq):
     except KeyError as exc:
         raise HTTPException(404, f"unknown case {req.case_id}") from exc
     return {"case_id": req.case_id, "state": state}
+
+
+class TamperReq(BaseModel):
+    case_id: str
+
+
+@app.post("/dev/tamper")
+def tamper(req: TamperReq):
+    """Mock only: alter one stored case event so the console can show the chain check failing."""
+    if os.environ.get("MOCK_TWILIO", "1") == "0":
+        raise HTTPException(404, "mock only")
+    try:
+        seq = store.tamper_for_demo(req.case_id)
+    except KeyError as exc:
+        raise HTTPException(404, f"unknown case {req.case_id}") from exc
+    return {"ok": True, "seq": seq}
 
 
 # ---- eval ------------------------------------------------------------------------------------
