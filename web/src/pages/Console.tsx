@@ -9,7 +9,7 @@ import { Timeline } from '../components/Timeline'
 import { SegmentTable } from '../components/SegmentTable'
 import { ActionsPanel } from '../components/ActionsPanel'
 import { CasePacket } from '../components/CasePacket'
-import { Button, ErrorNote } from '../components/ui'
+import { Button, ErrorNote, PageHeader } from '../components/ui'
 
 export default function Console() {
   const [clip, setClip] = useState<PickedClip | null>(null)
@@ -103,24 +103,30 @@ export default function Console() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="grid gap-4 md:grid-cols-2">
-        <ClipPicker picked={clip} onPick={setClip} disabled={running} />
-        <ModeSelector mode={mode} model={model} onMode={changeMode} onModel={setModel} disabled={running} />
-      </div>
-      <div className="flex flex-wrap items-center gap-3">
-        <Button onClick={() => void run()} disabled={!clip || running} className="w-full sm:w-auto">
-          {running ? 'Analyzing…' : 'Run analysis'}
-        </Button>
-        {!clip && <span className="text-sm text-slate-500">Pick a clip first.</span>}
-      </div>
-      {error && <ErrorNote>{error}</ErrorNote>}
-      <TraceFeed events={events} running={running} />
-      <Timeline result={result} detectorA={detectorA} />
-      <SegmentTable result={result} />
-      <div className="grid gap-4 md:grid-cols-2">
-        <ActionsPanel view={caseView} busy={busy} onReply={(r) => void onReply(r)} onOpen={() => void onOpenCase()} canOpen={result !== null && jobId !== null} />
-        <CasePacket packet={packet} view={caseView} />
+    <div>
+      <PageHeader
+        title="Analyst console"
+        desc="Pick a recording, choose how CallGuard checks it, and see exactly which stretches are AI."
+      />
+      <div className="space-y-6">
+        <div className="grid gap-6 lg:grid-cols-2">
+          <ClipPicker picked={clip} onPick={setClip} disabled={running} />
+          <ModeSelector mode={mode} model={model} onMode={changeMode} onModel={setModel} disabled={running} />
+        </div>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+          <Button onClick={() => void run()} disabled={!clip || running} className="w-full !px-8 !py-3.5 !text-lg sm:w-auto">
+            {running ? 'Checking…' : 'Check this call'}
+          </Button>
+          {!clip && <span className="text-[16px] text-mute">Pick a recording first.</span>}
+        </div>
+        {error && <ErrorNote>{error}</ErrorNote>}
+        <TraceFeed events={events} running={running} />
+        <Timeline result={result} detectorA={detectorA} />
+        <SegmentTable result={result} />
+        <div className="grid gap-6 lg:grid-cols-2">
+          <ActionsPanel view={caseView} busy={busy} onReply={(r) => void onReply(r)} onOpen={() => void onOpenCase()} canOpen={result !== null && jobId !== null} />
+          <CasePacket packet={packet} />
+        </div>
       </div>
     </div>
   )

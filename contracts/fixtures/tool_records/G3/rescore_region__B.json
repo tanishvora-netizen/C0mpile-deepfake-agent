@@ -1,7 +1,7 @@
 {
   "tool": "rescore_region",
   "version": "0.1.0",
-  "clip_id": "2b8b1772d69713d9e9211e13b0844c7ce295efc0b0291b397f7bcae823620c28",
+  "clip_id": "5c5a0fa5f6db19156d998dd6843a2dffab58f4ac72e288c1332e93e287b6c083",
   "params": {
     "detector": "B",
     "start": 0.0,

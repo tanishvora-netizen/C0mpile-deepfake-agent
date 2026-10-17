@@ -81,11 +81,13 @@ def _load_golden() -> None:
         intake = importlib.import_module("intake.store")
     except ImportError:
         return
-    for wav in sorted(gdir.glob("*.wav")):
-        if wav.stem in GOLDEN:
+    sample = ROOT / "data" / "samples" / "ai_voice_jake.wav"
+    for wav in [*sorted(gdir.glob("*.wav")), *([sample] if sample.exists() else [])]:
+        key = "sample_ai_jake" if wav == sample else wav.stem
+        if key in GOLDEN:
             continue
         try:
-            GOLDEN[wav.stem] = intake.ingest(wav.read_bytes(), wav.name).clip_id
+            GOLDEN[key] = intake.ingest(wav.read_bytes(), wav.name).clip_id
         except Exception as exc:  # noqa: BLE001
             jlog("golden_ingest_failed", case_id=wav.stem, error=str(exc)[:200])
 
@@ -139,14 +141,27 @@ GOLDEN_INFO = {
 }
 
 
+LIVE_EXAMPLES = {
+    "sample_ai_jake": ("Cloned 'Jake' voice", "A computer-generated copy of Jake's voice. Add a recording of yourself next to it."),
+    "G3": ("Scam call, both voices AI", "A cloned 'Jake' asks for help, then an AI 'lawyer' asks for $9,500. Every voice is computer-generated."),
+    "G2": ("Fully cloned call", "Every word is an AI clone of Jake asking for money."),
+}
+
+
 @app.get("/clips/golden")
 def get_golden():
+    """Example calls. In live mode only the ones whose description is true of real detection are offered:
+    every example voice is text-to-speech, so stories that promise a real person are left out."""
     if not GOLDEN:
         _load_golden()
     intake = _lazy("intake.store")
+    live = _detection_mode() == "live"
+    info = LIVE_EXAMPLES if live else GOLDEN_INFO
     out = []
-    for n, c in sorted(GOLDEN.items()):
-        title, desc = GOLDEN_INFO.get(n, (n, ""))
+    for n, c in sorted(GOLDEN.items(), key=lambda kv: list(info).index(kv[0]) if kv[0] in info else 99):
+        if n not in info:
+            continue
+        title, desc = info[n]
         try:
             duration = intake.get(c).duration_s
         except Exception:  # noqa: BLE001

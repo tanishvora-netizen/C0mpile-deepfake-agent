@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { listGolden, uploadClip } from '../api'
 import type { GoldenClip } from '../types'
-import { Card, ErrorNote } from './ui'
+import { Card, ErrorNote, btnSecondary, focusRing } from './ui'
 
 export interface PickedClip {
   clip_id: string
@@ -38,7 +38,7 @@ export function ClipPicker({ picked, onPick, disabled }: {
   }
 
   return (
-    <Card title="1. Clip">
+    <Card title="1. Pick a recording" desc="Choose an example call or upload your own audio.">
       <div className="flex flex-wrap gap-2" role="group" aria-label="Example calls">
         {golden.map((g) => {
           const on = picked?.clip_id === g.clip_id
@@ -48,18 +48,18 @@ export function ClipPicker({ picked, onPick, disabled }: {
               disabled={disabled}
               onClick={() => onPick({ clip_id: g.clip_id, label: g.title ?? g.name })}
               aria-pressed={on}
-              className={`min-h-10 min-w-12 rounded-md border px-3 py-1.5 text-sm font-semibold transition disabled:opacity-50 ${
-                on ? 'border-accent bg-accent text-white' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+              className={`min-h-11 min-w-12 rounded-full border px-4 py-2 text-[16px] font-bold transition disabled:opacity-50 ${focusRing} ${
+                on ? 'border-accent bg-accent text-accent-ink' : 'border-line bg-card2 text-ink hover:border-accent hover:text-accent'
               }`}
             >
               {g.title ?? g.name}
             </button>
           )
         })}
-        {!golden.length && !err && <span className="text-sm text-slate-500">Loading clips…</span>}
+        {!golden.length && !err && <span className="text-[16px] text-mute">Loading clips…</span>}
       </div>
-      <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
-        <label className="cursor-pointer rounded-md border border-dashed border-slate-300 px-3 py-2 text-slate-600 hover:bg-slate-50">
+      <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-3">
+        <label className={`${btnSecondary} cursor-pointer border-dashed !py-2.5 text-[16px] has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-accent ${disabled || busy ? 'pointer-events-none opacity-50' : ''}`}>
           {busy ? 'Uploading…' : 'Upload audio'}
           <input
             ref={fileRef}
@@ -70,11 +70,11 @@ export function ClipPicker({ picked, onPick, disabled }: {
             onChange={(e) => void onFile(e.target.files?.[0])}
           />
         </label>
-        <span className="text-slate-500">
-          {picked ? <>Selected: <b className="text-slate-800">{picked.label}</b></> : 'No clip selected'}
+        <span className="min-w-0 break-words text-[16px] text-mute">
+          {picked ? <>Selected: <b className="text-ink">{picked.label}</b></> : 'Nothing selected yet'}
         </span>
       </div>
-      {err && <div className="mt-3"><ErrorNote>{err}</ErrorNote></div>}
+      {err && <div className="mt-4"><ErrorNote>{err}</ErrorNote></div>}
     </Card>
   )
 }

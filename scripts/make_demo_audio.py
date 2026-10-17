@@ -29,7 +29,7 @@ TRANSCRIPTS = ROOT / "contracts" / "fixtures" / "transcripts"
 
 JAKE_REAL = "Tom"
 JAKE_CLONE = "Eddy (English (US))"
-LAWYER = "Ralph"
+LAWYER = "Reed (English (US))"
 FRIEND = "Daniel"
 
 # Per clip, one line per segment in CLIPS order: (voice, spoken text, caption text, who).

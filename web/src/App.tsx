@@ -12,36 +12,58 @@ const TABS = [
   { to: '/eval', label: 'Eval' },
 ]
 
+/** Token of a held transfer saved by the Bank screen (so Approve can be reached from the bar). */
+function savedApproveToken(): string | null {
+  try {
+    const raw = sessionStorage.getItem('callguard.bank.transfer')
+    const t = raw ? (JSON.parse(raw) as { state?: string; token?: string }) : null
+    return t && t.state === 'HELD' && t.token ? t.token : null
+  } catch {
+    return null
+  }
+}
+
 function AnalystShell() {
-  const { search } = useLocation()
+  const { search, pathname } = useLocation()
+  const onApprove = pathname.startsWith('/approve/')
+  const token = onApprove ? pathname.split('/')[2] : savedApproveToken()
+  const tabs = [
+    ...TABS.slice(0, 2),
+    ...(token ? [{ to: `/approve/${token}`, label: 'Approve' }] : []),
+    ...TABS.slice(2),
+  ]
   return (
-    <div className="min-h-screen">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2.5">
-          <span className="text-base font-bold tracking-tight text-accent">CallGuard</span>
-          <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-slate-500">Analyst view</span>
-          <nav className="flex gap-1" aria-label="Screens">
-            {TABS.map((t) => (
+    <div className="min-h-screen text-[17px] text-ink">
+      <header className="sticky top-0 z-20 border-b border-line bg-bg/90 backdrop-blur">
+        <div className="mx-auto flex w-full max-w-[1100px] flex-wrap items-center justify-between gap-x-6 gap-y-3 px-4 py-3 sm:px-6">
+          <NavLink
+            to={{ pathname: '/', search }}
+            className="inline-flex items-center gap-2 rounded-full border border-line bg-card px-4 py-2 text-[16px] font-bold text-ink transition hover:border-accent hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          >
+            <span aria-hidden="true">←</span> Back to CallGuard
+          </NavLink>
+          <nav className="-mx-1 flex max-w-full gap-1 overflow-x-auto px-1" aria-label="Analyst view">
+            {tabs.map((t) => (
               <NavLink
                 key={t.to}
                 to={{ pathname: t.to, search }}
                 className={({ isActive }) =>
-                  `rounded-md px-3 py-1.5 text-sm font-medium ${isActive ? 'bg-accent-soft text-accent' : 'text-slate-600 hover:bg-slate-100'}`
+                  `whitespace-nowrap rounded-full px-4 py-2 text-[16px] font-bold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
+                    isActive ? 'bg-accent text-accent-ink' : 'text-mute hover:bg-card2 hover:text-ink'
+                  }`
                 }
               >
                 {t.label}
               </NavLink>
             ))}
           </nav>
-          <NavLink to={{ pathname: '/', search }} className="text-sm font-medium text-slate-500 hover:text-slate-900">
-            ← Back to CallGuard
-          </NavLink>
-          {isFixtures() && (
-            <span className="ml-auto rounded bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900">fixtures mode</span>
-          )}
         </div>
       </header>
-      <main className="mx-auto max-w-5xl px-4 py-4">
+      <main className="mx-auto w-full max-w-[1100px] px-4 pb-16 pt-8 sm:px-6 sm:pt-10">
+        <div className="mb-4 flex flex-wrap items-center gap-2 text-[14px] font-bold uppercase tracking-widest text-mute">
+          <span className="text-accent">Analyst view</span>
+          {isFixtures() && <span className="rounded-full border border-part/50 bg-part/10 px-3 py-0.5 normal-case tracking-normal text-part">Example data mode</span>}
+        </div>
         <Routes>
           <Route path="/console" element={<Console />} />
           <Route path="/bank" element={<Bank />} />

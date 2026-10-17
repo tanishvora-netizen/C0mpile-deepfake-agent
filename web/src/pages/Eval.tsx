@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { getEval } from '../api'
 import { asObj } from '../lib/trace'
-import { Card, ErrorNote, Pill } from '../components/ui'
+import { Card, Disclosure, ErrorNote, PageHeader, Pill } from '../components/ui'
+import { cap, pct } from '../home/lib'
 
 type Row = Record<string, unknown>
 
@@ -35,6 +36,22 @@ function cell(v: unknown): string {
   return JSON.stringify(v)
 }
 
+const HEAD: Record<string, string> = {
+  system: 'Way of checking',
+  mean_turn_accuracy: 'Voices judged correctly',
+  abstain_rate: "Couldn't tell",
+  mean_tool_calls: 'Checks run (average)',
+}
+const RATE = /accuracy|rate|recall|precision|f1|auc/
+
+const head = (c: string): string => HEAD[c] ?? cap(c.replace(/_/g, ' '))
+function show(c: string, v: unknown): string {
+  if (c === 'system' && typeof v === 'string') return cap(v)
+  if (typeof v === 'number' && RATE.test(c) && v >= 0 && v <= 1) return pct(v)
+  if (typeof v === 'number' && c.includes('tool_calls')) return v.toFixed(1)
+  return cell(v)
+}
+
 export default function Eval() {
   const [raw, setRaw] = useState<unknown>(null)
   const [err, setErr] = useState<string | null>(null)
@@ -57,58 +74,66 @@ export default function Eval() {
   const isMock = parsed?.provenance === 'mock'
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-lg font-semibold">Evaluation</h1>
-        {parsed && (
-          <span
-            className={`rounded-md px-3 py-1 text-sm font-bold uppercase tracking-wide ${
-              isMock ? 'bg-amber-400 text-amber-950' : 'bg-ok-soft text-ok'
-            }`}
-          >
-            Provenance: {parsed.provenance ?? 'unknown'}
-          </span>
+    <div>
+      <PageHeader
+        title="Evaluation"
+        desc="How well each way of checking calls did on a set of test recordings."
+        right={
+          parsed && (
+            <Pill tone={isMock ? 'warn' : 'ok'}>
+              {isMock ? 'Example numbers, not measured' : parsed.provenance ? 'Measured results' : 'Source unknown'}
+            </Pill>
+          )
+        }
+      />
+      <div className="space-y-6">
+        {isMock && (
+          <p className="rounded-2xl border border-part/50 bg-part/10 px-4 py-3 text-[17px] leading-snug text-ink">
+            These numbers come from pretend tools and a pretend AI on placeholder clips. They show the test setup works, not how good the detectors really are.
+          </p>
+        )}
+        {parsed?.note && <p className="text-[17px] text-mute">{parsed.note}</p>}
+        {loading && <p className="text-[17px] text-mute">Loading results…</p>}
+        {err && !loading && (
+          <Card title="No results yet">
+            <p className="text-[17px] leading-snug text-mute">
+              Run <code className="rounded-md bg-card2 px-1.5 py-0.5 text-ink">make eval</code> to create{' '}
+              <code className="rounded-md bg-card2 px-1.5 py-0.5 text-ink">results/results.json</code>.
+            </p>
+            <div className="mt-4"><ErrorNote>{err}</ErrorNote></div>
+          </Card>
+        )}
+        {parsed && parsed.rows.length === 0 && !loading && !err && (
+          <Card title="No results yet">
+            <p className="text-[17px] leading-snug text-mute">
+              The results file is empty. Run <code className="rounded-md bg-card2 px-1.5 py-0.5 text-ink">make eval</code>.
+            </p>
+          </Card>
+        )}
+        {parsed && parsed.rows.length > 0 && (
+          <Card title="Ways of checking, compared" desc="Each row is one way of checking a call, tried on the same test recordings.">
+            <div className="overflow-x-auto rounded-2xl border border-line">
+              <table className="w-full min-w-[420px] text-left text-[17px]">
+                <thead className="bg-card2 text-[14px] font-semibold text-mute">
+                  <tr>{cols.map((c) => <th key={c} className="px-4 py-3 font-semibold">{head(c)}</th>)}</tr>
+                </thead>
+                <tbody className="divide-y divide-line">
+                  {parsed.rows.map((r, i) => (
+                    <tr key={i}>
+                      {cols.map((c) => (
+                        <td key={c} className={`px-4 py-3 tabular-nums ${c === 'system' ? 'font-bold text-ink' : 'text-ink'}`}>{show(c, r[c])}</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <Disclosure className="mt-4">
+              <p className="text-[15px] text-mute">Results source: {parsed.provenance ?? 'unknown'}. Raw column names: {cols.join(', ')}.</p>
+            </Disclosure>
+          </Card>
         )}
       </div>
-      {isMock && (
-        <p className="rounded-md border border-amber-300 bg-warn-soft px-3 py-2 text-sm text-amber-950">
-          These numbers come from mocked tools and a mocked LLM on placeholder clips. They show the harness works. They are not measured detector performance.
-        </p>
-      )}
-      {parsed?.note && <p className="text-sm text-slate-600">{parsed.note}</p>}
-      {loading && <p className="text-sm text-slate-500">Loading results…</p>}
-      {err && !loading && (
-        <Card>
-          <p className="text-sm text-slate-700">
-            No evaluation results yet. Run <code className="rounded bg-slate-100 px-1">make eval</code> to generate{' '}
-            <code className="rounded bg-slate-100 px-1">results/results.json</code>.
-          </p>
-          <div className="mt-3"><ErrorNote>{err}</ErrorNote></div>
-        </Card>
-      )}
-      {parsed && parsed.rows.length === 0 && !loading && !err && (
-        <Card><p className="text-sm text-slate-700">The results file is empty. Run <code className="rounded bg-slate-100 px-1">make eval</code>.</p></Card>
-      )}
-      {parsed && parsed.rows.length > 0 && (
-        <Card title="Systems compared" right={<Pill tone="neutral">{parsed.rows.length} rows</Pill>}>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[420px] text-left text-sm">
-              <thead className="text-xs uppercase tracking-wide text-slate-500">
-                <tr>{cols.map((c) => <th key={c} className="whitespace-nowrap py-1 pr-4 font-medium">{c.replace(/_/g, ' ')}</th>)}</tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {parsed.rows.map((r, i) => (
-                  <tr key={i}>
-                    {cols.map((c) => (
-                      <td key={c} className={`py-2 pr-4 tabular-nums ${c === 'system' ? 'font-semibold' : ''}`}>{cell(r[c])}</td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-      )}
     </div>
   )
 }

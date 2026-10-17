@@ -1,5 +1,5 @@
 import type { Mode } from '../types'
-import { Card } from './ui'
+import { Card, focusRing, inputCls } from './ui'
 
 export const MODELS = [
   { value: 'claude-haiku-5-5', label: 'claude-haiku-5-5' },
@@ -13,10 +13,10 @@ export const DEFAULT_MODEL: Record<Mode, string> = {
   adaptive: 'claude-sonnet-5-5',
 }
 
-const MODES: { value: Mode; hint: string }[] = [
-  { value: 'baseline', hint: 'No LLM' },
-  { value: 'fixed', hint: 'Fixed pipeline' },
-  { value: 'adaptive', hint: 'Agent picks tools' },
+const MODES: { value: Mode; title: string; hint: string }[] = [
+  { value: 'baseline', title: 'Baseline', hint: 'No AI agent' },
+  { value: 'fixed', title: 'Fixed', hint: 'Same steps every time' },
+  { value: 'adaptive', title: 'Adaptive', hint: 'Agent picks its checks' },
 ]
 
 export function ModeSelector({ mode, model, onMode, onModel, disabled }: {
@@ -27,31 +27,34 @@ export function ModeSelector({ mode, model, onMode, onModel, disabled }: {
   disabled: boolean
 }) {
   return (
-    <Card title="2. Mode">
-      <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Analysis mode">
-        {MODES.map((m) => (
-          <button
-            key={m.value}
-            role="radio"
-            aria-checked={mode === m.value}
-            disabled={disabled}
-            onClick={() => onMode(m.value)}
-            className={`rounded-md border px-2 py-2 text-left transition disabled:opacity-50 ${
-              mode === m.value ? 'border-accent bg-accent-soft' : 'border-slate-300 bg-white hover:bg-slate-50'
-            }`}
-          >
-            <span className="block text-sm font-semibold capitalize">{m.value}</span>
-            <span className="block text-xs text-slate-500">{m.hint}</span>
-          </button>
-        ))}
+    <Card title="2. Choose how to check" desc="Adaptive is the full CallGuard agent; the others are for comparison.">
+      <div className="grid grid-cols-1 gap-2 min-[480px]:grid-cols-3" role="radiogroup" aria-label="Analysis mode">
+        {MODES.map((m) => {
+          const on = mode === m.value
+          return (
+            <button
+              key={m.value}
+              role="radio"
+              aria-checked={on}
+              disabled={disabled}
+              onClick={() => onMode(m.value)}
+              className={`rounded-2xl border px-3 py-3 text-left transition disabled:opacity-50 ${focusRing} ${
+                on ? 'border-accent bg-accent/10' : 'border-line bg-card2 hover:border-accent/60'
+              }`}
+            >
+              <span className={`block text-[17px] font-extrabold ${on ? 'text-accent' : 'text-ink'}`}>{m.title}</span>
+              <span className="block text-[15px] leading-snug text-mute">{m.hint}</span>
+            </button>
+          )
+        })}
       </div>
-      <label className="mt-3 block text-sm">
-        <span className="mb-1 block text-slate-600">Model</span>
+      <label className="mt-4 block">
+        <span className="mb-1.5 block text-[16px] font-semibold text-mute">AI model</span>
         <select
           value={model}
           disabled={disabled || mode === 'baseline'}
           onChange={(e) => onModel(e.target.value)}
-          className="min-h-10 w-full rounded-md border border-slate-300 bg-white px-2 py-2 disabled:bg-slate-100 disabled:text-slate-400"
+          className={inputCls}
         >
           {MODELS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
         </select>

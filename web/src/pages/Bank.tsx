@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { createTransfer, getTransfer } from '../api'
 import type { Transfer } from '../types'
-import { Button, ErrorNote } from '../components/ui'
+import { Button, ErrorNote, Field, PageHeader, inputCls } from '../components/ui'
 
 const START_BALANCE = 48250
 const SAVED_TRANSFER_KEY = 'callguard.bank.transfer'
@@ -34,10 +34,17 @@ export function statusCopy(t: Transfer): { tone: 'ok' | 'warn' | 'critical' | 'n
 }
 
 const TONE = {
-  ok: 'border-green-300 bg-ok-soft text-green-900',
-  warn: 'border-amber-300 bg-warn-soft text-amber-950',
-  critical: 'border-red-300 bg-critical-soft text-red-900',
-  neutral: 'border-slate-200 bg-slate-50 text-slate-700',
+  ok: 'border-human/40 bg-human/10',
+  warn: 'border-part/50 bg-part/10',
+  critical: 'border-ai/40 bg-ai/10',
+  neutral: 'border-line bg-card',
+}
+const TONE_HEAD = { ok: 'text-human', warn: 'text-part', critical: 'text-ai', neutral: 'text-mute' }
+const STATE_WORD: Record<Transfer['state'], string> = {
+  PENDING: 'Sending',
+  HELD: 'On hold',
+  RELEASED: 'Sent',
+  DECLINED: 'Cancelled',
 }
 
 export default function Bank() {
@@ -104,58 +111,48 @@ export default function Bank() {
   const status = transfer ? statusCopy(transfer) : null
 
   return (
-    <div className="mx-auto w-full max-w-[390px] space-y-4">
-      <div className="rounded-xl bg-accent p-5 text-white shadow">
-        <p className="text-sm opacity-80">Checking account · Grandma</p>
-        <p className="mt-1 text-3xl font-semibold tabular-nums">{usd(balance)}</p>
-        <p className="text-xs opacity-70">Available balance</p>
-      </div>
-
-      <form onSubmit={(e) => void submit(e)} className="space-y-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-        <h2 className="text-base font-semibold">Send money</h2>
-        <label className="block text-sm">
-          <span className="mb-1 block text-slate-600">Payee</span>
-          <input
-            value={payee}
-            onChange={(e) => setPayee(e.target.value)}
-            required
-            className="min-h-11 w-full rounded-md border border-slate-300 px-3 py-2 text-base"
-          />
-        </label>
-        <label className="block text-sm">
-          <span className="mb-1 block text-slate-600">Amount (USD)</span>
-          <input
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            inputMode="decimal"
-            required
-            className="min-h-11 w-full rounded-md border border-slate-300 px-3 py-2 text-base tabular-nums"
-          />
-        </label>
-        <label className="flex items-center gap-2 text-sm text-slate-700">
-          <input type="checkbox" checked={newPayee} onChange={(e) => setNewPayee(e.target.checked)} className="size-5" />
-          This is a new payee
-        </label>
-        {error && <ErrorNote>{error}</ErrorNote>}
-        <Button type="submit" disabled={busy} className="w-full !min-h-12 text-base">
-          {busy ? 'Sending…' : 'Send money'}
-        </Button>
-      </form>
-
-      {transfer && status && (
-        <div role="status" className={`space-y-2 rounded-lg border p-4 text-base ${TONE[status.tone]}`}>
-          <p className="text-xs font-semibold uppercase tracking-wide opacity-70">Transfer status: {transfer.state}</p>
-          <p>{status.text}</p>
-          {transfer.state === 'HELD' && transfer.token && (
-            <p className="border-t border-amber-300 pt-2 text-xs">
-              Demo only:{' '}
-              <Link className="font-semibold underline" to={`/approve/${transfer.token}${search}`}>
-                open the trusted contact approval page
-              </Link>
-            </p>
-          )}
+    <div className="mx-auto w-full max-w-[390px]">
+      <PageHeader title="Demo bank" desc="A pretend bank app. Send money to see CallGuard hold a risky transfer." />
+      <div className="space-y-4">
+        <div className="rounded-3xl bg-accent p-6 text-accent-ink">
+          <p className="text-[16px] font-semibold opacity-80">Checking account · Grandma</p>
+          <p className="mt-1 text-[44px] font-black leading-none tracking-tight tabular-nums">{usd(balance)}</p>
+          <p className="mt-1 text-[15px] font-medium opacity-75">Available balance</p>
         </div>
-      )}
+
+        <form onSubmit={(e) => void submit(e)} className="space-y-4 rounded-3xl border border-line bg-card p-5">
+          <h2 className="text-[24px] font-extrabold tracking-tight">Send money</h2>
+          <Field label="Payee">
+            <input value={payee} onChange={(e) => setPayee(e.target.value)} required className={inputCls} />
+          </Field>
+          <Field label="Amount (USD)">
+            <input value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="decimal" required className={`${inputCls} tabular-nums`} />
+          </Field>
+          <label className="flex min-h-11 cursor-pointer items-center gap-3 text-[17px] text-ink">
+            <input type="checkbox" checked={newPayee} onChange={(e) => setNewPayee(e.target.checked)} className="size-6 accent-[#d1fe17]" />
+            This is a new payee
+          </label>
+          {error && <ErrorNote>{error}</ErrorNote>}
+          <Button type="submit" disabled={busy} className="w-full !py-3.5 !text-lg">
+            {busy ? 'Sending…' : 'Send money'}
+          </Button>
+        </form>
+
+        {transfer && status && (
+          <div role="status" className={`space-y-2 rounded-3xl border p-5 ${TONE[status.tone]}`}>
+            <p className={`text-[15px] font-bold uppercase tracking-wide ${TONE_HEAD[status.tone]}`}>Transfer {STATE_WORD[transfer.state].toLowerCase()}</p>
+            <p className="text-[17px] leading-snug text-ink">{status.text}</p>
+            {transfer.state === 'HELD' && transfer.token && (
+              <p className="border-t border-part/30 pt-3 text-[15px] text-mute">
+                Demo only:{' '}
+                <Link className="font-semibold text-accent underline underline-offset-4" to={`/approve/${transfer.token}${search}`}>
+                  open the trusted contact approval page
+                </Link>
+              </p>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

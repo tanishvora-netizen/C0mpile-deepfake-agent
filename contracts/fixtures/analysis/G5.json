@@ -12,7 +12,7 @@
       "evidence": [
         {
           "tool": "score_windows",
-          "field": "windows.p_fake (B, range mean)",
+          "field": "windows.p_fake range mean (B)",
           "value": 0.185
         },
         {
@@ -31,7 +31,7 @@
       "evidence": [
         {
           "tool": "score_windows",
-          "field": "windows.p_fake (B, range mean)",
+          "field": "windows.p_fake range mean (B)",
           "value": 0.778
         },
         {
@@ -50,7 +50,7 @@
       "evidence": [
         {
           "tool": "score_windows",
-          "field": "windows.p_fake (B, range mean)",
+          "field": "windows.p_fake range mean (B)",
           "value": 0.168
         },
         {
@@ -68,7 +68,7 @@
   "trace_id": "fixture-g5",
   "usage": {
     "input_tokens": 2104,
-    "output_tokens": 315,
+    "output_tokens": 314,
     "tool_calls": 5,
     "seconds": 0.4,
     "usd": 0.0,

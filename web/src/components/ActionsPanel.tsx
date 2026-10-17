@@ -1,5 +1,5 @@
 import type { CaseView, CaseState } from '../types'
-import { Button, Card, Pill } from './ui'
+import { Button, Card, Empty, Pill } from './ui'
 
 const ACTION_LABEL: Record<string, string> = {
   verify_contact: 'Verify with contact',
@@ -24,46 +24,44 @@ export function ActionsPanel({ view, busy, onReply, onOpen, canOpen }: {
 }) {
   return (
     <Card
-      title="Actions"
+      title="Next steps"
+      desc="Open a case to protect the account and ask the contact to confirm."
       right={
-        <Button variant="secondary" onClick={onOpen} disabled={!canOpen || busy || view !== null} className="!min-h-9 !py-1.5">
+        <Button variant="secondary" onClick={onOpen} disabled={!canOpen || busy || view !== null} className="!px-5 !py-2 !text-[16px]">
           {view ? `Case ${view.case_id.slice(0, 12)}` : 'Open case'}
         </Button>
       }
     >
       {!view ? (
-        <p className="text-sm text-slate-500">
-          Open a case from this analysis to run the policy and ask the contact to verify.
-        </p>
+        <Empty>Open a case from this check to run the safety policy and ask the contact to verify.</Empty>
       ) : (
-        <div className="space-y-4">
-          <ul className="space-y-1.5">
-            {view.actions.length === 0 && <li className="text-sm text-slate-500">No actions required.</li>}
+        <div className="space-y-5">
+          <ul className="space-y-2">
+            {view.actions.length === 0 && <li><Empty>No actions required.</Empty></li>}
             {view.actions.map((a, i) => (
-              <li key={i} className="rounded-md border border-slate-200 px-3 py-2 text-sm">
-                <p className="font-semibold">
+              <li key={i} className="rounded-2xl border border-line bg-card2 px-4 py-3">
+                <p className="text-[17px] font-bold text-ink">
                   {ACTION_LABEL[a.type] ?? a.type}
-                  {a.target && <span className="ml-1.5 font-mono text-xs font-normal text-slate-500">{a.target}</span>}
+                  {a.target && <span className="ml-2 break-all font-mono text-[13px] font-normal text-mute">{a.target}</span>}
                 </p>
-                <p className="text-slate-600">{a.reason}</p>
+                <p className="mt-0.5 text-[16px] leading-snug text-mute">{a.reason}</p>
               </li>
             ))}
           </ul>
           <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Verification status</p>
-            <div className="mt-1 flex flex-wrap items-center gap-2">
-              <span className="text-sm font-semibold">Jake</span>
-              <Pill tone={STATE_COPY[view.state].tone}>{view.state}</Pill>
-              <span className="text-sm text-slate-600">{STATE_COPY[view.state].text}</span>
+            <p className="text-[15px] font-semibold text-mute">Contact status</p>
+            <div className="mt-1.5 flex flex-wrap items-center gap-2">
+              <span className="text-[17px] font-bold text-ink">Jake</span>
+              <Pill tone={STATE_COPY[view.state].tone}>{STATE_COPY[view.state].text}</Pill>
             </div>
           </div>
-          <div className="rounded-md border border-dashed border-slate-300 p-3">
-            <p className="mb-2 text-xs text-slate-500">
-              <b>Mock only.</b> Pretend to be Jake replying to the SMS.
+          <div className="rounded-2xl border border-dashed border-line p-4">
+            <p className="mb-3 text-[15px] leading-snug text-mute">
+              <b className="text-ink">Demo only.</b> Pretend to be Jake replying to the text message.
             </p>
-            <div className="flex gap-2">
-              <Button variant="secondary" disabled={busy} onClick={() => onReply('YES')} className="flex-1">YES, it was me</Button>
-              <Button variant="danger" disabled={busy} onClick={() => onReply('NO')} className="flex-1">NO, not me</Button>
+            <div className="flex flex-col gap-2 min-[480px]:flex-row">
+              <Button variant="secondary" disabled={busy} onClick={() => onReply('YES')} className="flex-1">Yes, it was me</Button>
+              <Button variant="danger" disabled={busy} onClick={() => onReply('NO')} className="flex-1">No, not me</Button>
             </div>
           </div>
         </div>
