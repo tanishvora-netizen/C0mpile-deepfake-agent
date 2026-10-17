@@ -424,7 +424,7 @@ The single door between the orchestrator and every worker: it validates, caches,
 
 ## M4 Orchestrator agent
 
-One LLM agent reads tool records, picks further tools within caps, and returns a validated `AnalysisResult`; it has no side-effect tools and never sees transcripts. Owns `orchestrator/`. About 3 hours; develops entirely against `MOCK_TOOLS=1` until checkpoint I2.
+One LLM agent reads tool records, picks further tools within caps, and returns a validated `AnalysisResult`; it has no side-effect tools and never sees transcripts. Owns `orchestrator/`.  develops entirely against `MOCK_TOOLS=1` until checkpoint I2.
 
 **Interface:**
 
@@ -488,7 +488,7 @@ Tool cards: {tool_cards}
 
 ## M5 Baseline and eval harness
 
-This module proves or disproves the technical claim: it builds the mixed test set, runs a no-LLM localizing baseline, and produces one comparison table from one command. Owns `baseline_eval/`. About 3 hours; uses M3 for tools and M4 for the agent modes.
+This module proves or disproves the technical claim: it builds the mixed test set, runs a no-LLM localizing baseline, and produces one comparison table from one command. Owns `baseline_eval/`.  uses M3 for tools and M4 for the agent modes.
 
 ### Baseline (no LLM)
 
@@ -533,7 +533,7 @@ The builder must not hand the agent a shortcut: real scam calls have no hard cut
 
 ## M6 Policy and actions
 
-Plain code turns a verdict into outcomes: a text to the real person, a held transfer, and a trusted-contact alert. No LLM decides anything here. Owns `policy_actions/`. About 2.5 hours; develops against the G3 `AnalysisResult` fixture with `MOCK_TWILIO=1`.
+Plain code turns a verdict into outcomes: a text to the real person, a held transfer, and a trusted-contact alert. No LLM decides anything here. Owns `policy_actions/`.  develops against the G3 `AnalysisResult` fixture with `MOCK_TWILIO=1`.
 
 **Files:** `claim.py`, `rules.yaml`, `engine.py`, `verifier.py`, `breaker.py`, `contacts.yaml`.
 
@@ -589,7 +589,7 @@ Transfer:  new payee while case is not VERIFIED -> HELD
 
 ## M7 Case store and case writer
 
-The regulated-track deliverable: an append-only, tamper-evident record of what was claimed, what verification returned and what was blocked, plus a draft SAR narrative a BSA officer can edit. Owns `cases/`. About 2 hours; depends on contracts only.
+The regulated-track deliverable: an append-only, tamper-evident record of what was claimed, what verification returned and what was blocked, plus a draft SAR narrative a BSA officer can edit. Owns `cases/`. ; depends on contracts only.
 
 **Interface:**
 
@@ -618,7 +618,7 @@ write_packet(case_id: str) -> dict                              # summary, timel
 
 ## M8 API gateway
 
-The glue: one FastAPI app on port 8000 that wires intake, orchestrator, policy, cases and the mock bank behind REST, SSE and Twilio webhooks. Owns `api/`. About 2 hours, built by the lead alongside contracts; every route works with all mocks on.
+The glue: one FastAPI app on port 8000 that wires intake, orchestrator, policy, cases and the mock bank behind REST, SSE and Twilio webhooks. Owns `api/`.  built by the lead alongside contracts; every route works with all mocks on.
 
 | Method and path | Does | Calls |
 | --- | --- | --- |
@@ -649,7 +649,7 @@ The glue: one FastAPI app on port 8000 that wires intake, orchestrator, policy, 
 
 ## M9 Frontend
 
-Four screens that make the demo legible in two minutes: what the agent did, what it found, and what it stopped. Owns `web/` (Vite, React, TypeScript, Tailwind, wavesurfer.js regions). About 3 hours; builds entirely against fixture JSON until checkpoint I1.
+Four screens that make the demo legible in two minutes: what the agent did, what it found, and what it stopped. Owns `web/` (Vite, React, TypeScript, Tailwind, wavesurfer.js regions).  builds entirely against fixture JSON until checkpoint I1.
 
 | Route | Who sees it | Shows |
 | --- | --- | --- |
@@ -690,7 +690,7 @@ Four people each drive two or three coding subagents, and the team merges at fou
 
 With three people, merge A and D's integration work; with two, one person takes M2 and M5 and the other takes everything else.
 
-**Checkpoints (hours from start):**
+**Checkpoints :**
 
 1. **H+0:30, foundations.** Contracts, fixtures, `CLAUDE.md` and golden clips G1 to G6 are committed. Every subagent is launched with its section.
 2. **H+2:00, I1 mock end to end.** `smoke.sh` passes and the console renders G3 from mocks, with no GPU.

@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Full build spec: `callguard-spec.md`. Find your module's section there (M0 to M9) before starting.
+Full build spec: `SPEC-deepfake-agent.md`. Find your module's section there (M0 to M9) before starting.
 
 ## Rules for every coding subagent
 
