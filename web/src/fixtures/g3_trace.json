@@ -1,0 +1,59 @@
+[
+  { "trace_id": "fx-g3-adaptive", "seq": 0, "kind": "tool_call",
+    "payload": { "tool": "get_context", "args": { "clip_id": "g3" } } },
+  { "trace_id": "fx-g3-adaptive", "seq": 1, "kind": "tool_result",
+    "payload": { "tool": "get_context", "version": "mock-1", "clip_id": "g3", "params": {}, "status": "ok",
+      "values": { "speech_ratio": 0.94, "language": "en", "turns": [
+        { "idx": 0, "speaker": "S1", "start": 0.0, "end": 3.0, "bandwidth_hz": 7800, "snr_db": 24 },
+        { "idx": 1, "speaker": "S2", "start": 3.0, "end": 7.0, "bandwidth_hz": 7900, "snr_db": 26 } ], "mos": 3.9 },
+      "validity": { "min_duration_s": 1.0, "sample_rate": 16000 }, "flags": [], "runtime_ms": 412 } },
+  { "trace_id": "fx-g3-adaptive", "seq": 2, "kind": "tool_call",
+    "payload": { "tool": "score_turns", "args": { "clip_id": "g3", "detector": "A" } } },
+  { "trace_id": "fx-g3-adaptive", "seq": 3, "kind": "tool_result",
+    "payload": { "tool": "score_turns", "version": "mock-1", "clip_id": "g3", "params": { "detector": "A" }, "status": "ok",
+      "values": { "scores": [
+        { "idx": 0, "speaker": "S1", "start": 0.0, "end": 3.0, "p_fake": 0.93 },
+        { "idx": 1, "speaker": "S2", "start": 3.0, "end": 7.0, "p_fake": 0.06 } ], "clip_p_fake": 0.58 },
+      "validity": { "min_duration_s": 1.0, "sample_rate": 16000 }, "flags": [], "runtime_ms": 1184 } },
+  { "trace_id": "fx-g3-adaptive", "seq": 4, "kind": "tool_call",
+    "payload": { "tool": "score_turns", "args": { "clip_id": "g3", "detector": "B" } } },
+  { "trace_id": "fx-g3-adaptive", "seq": 5, "kind": "tool_result",
+    "payload": { "tool": "score_turns", "version": "mock-1", "clip_id": "g3", "params": { "detector": "B" }, "status": "ok",
+      "values": { "scores": [
+        { "idx": 0, "speaker": "S1", "start": 0.0, "end": 3.0, "p_fake": 0.41 },
+        { "idx": 1, "speaker": "S2", "start": 3.0, "end": 7.0, "p_fake": 0.07 } ], "clip_p_fake": 0.22 },
+      "validity": { "min_duration_s": 1.0, "sample_rate": 16000 }, "flags": [], "runtime_ms": 932 } },
+  { "trace_id": "fx-g3-adaptive", "seq": 6, "kind": "llm",
+    "payload": { "model": "claude-sonnet-5-5", "text": "Detectors A and B disagree on turn 0 (0.93 vs 0.41). Checking where the change happens, then re-scoring turn 0 with long context." } },
+  { "trace_id": "fx-g3-adaptive", "seq": 7, "kind": "tool_call",
+    "payload": { "tool": "find_boundaries", "args": { "clip_id": "g3", "start": 0, "end": 7, "signals": ["p_fake_A", "p_fake_B", "bandwidth", "loudness", "snr"] } } },
+  { "trace_id": "fx-g3-adaptive", "seq": 8, "kind": "tool_result",
+    "payload": { "tool": "find_boundaries", "version": "mock-1", "clip_id": "g3", "params": {}, "status": "ok",
+      "values": { "change_points": [ { "t": 3.0, "moved": "p_fake_A", "deltas": { "p_fake_A": 0.87, "bandwidth": 0.1 } } ] },
+      "validity": { "min_duration_s": 1.0, "sample_rate": 16000 }, "flags": [], "runtime_ms": 288 } },
+  { "trace_id": "fx-g3-adaptive", "seq": 9, "kind": "tool_call",
+    "payload": { "tool": "rescore_region", "args": { "clip_id": "g3", "detector": "B", "start": 0, "end": 3, "context_s": 15 } } },
+  { "trace_id": "fx-g3-adaptive", "seq": 10, "kind": "tool_result",
+    "payload": { "tool": "rescore_region", "version": "mock-1", "clip_id": "g3", "params": { "detector": "B", "start": 0, "end": 3, "context_s": 15 }, "status": "ok",
+      "values": { "p_fake": 0.88 },
+      "validity": { "min_duration_s": 1.0, "sample_rate": 16000 }, "flags": [], "runtime_ms": 1460 } },
+  { "trace_id": "fx-g3-adaptive", "seq": 11, "kind": "final",
+    "payload": {
+      "clip_id": "g3", "system": "adaptive", "model": "claude-sonnet-5-5",
+      "segments": [
+        { "start": 0.0, "end": 3.0, "speaker": "S1", "label": "synthetic", "tool_score": 0.88,
+          "evidence": [
+            { "tool": "score_turns", "field": "p_fake_A", "value": 0.93 },
+            { "tool": "score_turns", "field": "p_fake_B", "value": 0.41 },
+            { "tool": "rescore_region", "field": "p_fake", "value": 0.88 } ] },
+        { "start": 3.0, "end": 7.0, "speaker": "S2", "label": "bona_fide", "tool_score": 0.06,
+          "evidence": [
+            { "tool": "score_turns", "field": "p_fake_A", "value": 0.06 },
+            { "tool": "score_turns", "field": "p_fake_B", "value": 0.07 } ] }
+      ],
+      "mixed": true, "composition": "speaker_handoff", "abstain": null,
+      "summary": "Turn 0 (S1) is synthetic: score_turns A gave 0.93 and a long-context rescore_region gave 0.88, resolving the A/B disagreement. Turn 1 (S2) is bona fide (score_turns A 0.06, B 0.07). find_boundaries places the authenticity change at 3.0 s, so this is a speaker handoff from a cloned voice to a real person.",
+      "trace_id": "fx-g3-adaptive",
+      "usage": { "tokens": 3820, "tool_calls": 5, "seconds": 4.3, "usd": 0.021 }
+    } }
+]

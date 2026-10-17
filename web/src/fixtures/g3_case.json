@@ -1,0 +1,24 @@
+{
+  "case": {
+    "case_id": "case-g3-fixture",
+    "state": "VERIFYING",
+    "actions": [
+      { "type": "verify_contact", "case_id": "case-g3-fixture", "target": "jake", "reason": "Synthetic voice claimed to be Jake; asking Jake directly by SMS." },
+      { "type": "hold_new_payee", "case_id": "case-g3-fixture", "target": null, "reason": "New payees are held until the caller is verified." },
+      { "type": "notify_trusted_contact", "case_id": "case-g3-fixture", "target": "trusted_contact", "reason": "Held transfers need a second key from the trusted contact." }
+    ],
+    "events": [
+      { "case_id": "case-g3-fixture", "seq": 0, "ts": "2026-10-17T18:00:00Z", "type": "clip_ingested", "payload": { "clip_id": "g3" }, "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000", "hash": "a1" },
+      { "case_id": "case-g3-fixture", "seq": 1, "ts": "2026-10-17T18:00:05Z", "type": "analysis_done", "payload": { "mixed": true }, "prev_hash": "a1", "hash": "a2" },
+      { "case_id": "case-g3-fixture", "seq": 2, "ts": "2026-10-17T18:00:06Z", "type": "action", "payload": { "type": "verify_contact", "target": "jake" }, "prev_hash": "a2", "hash": "a3" }
+    ],
+    "chain": { "ok": true, "bad_seq": null }
+  },
+  "packet": {
+    "summary": "Incident case-g3-fixture: a 7 s call opened with a cloned voice claiming to be Jake (0.0 to 3.0 s, detectors A 0.93 and B-long-context 0.88) and was handed to a real human posing as a lawyer (3.0 to 7.0 s) who asked for a $9,500 wire to a new payee. Jake was texted for confirmation and the transfer was held pending a trusted-contact decision.",
+    "sar_draft": "DRAFT for BSA officer review\n\nSubject: Suspected AI voice-clone impersonation and attempted wire fraud\nMember: grandma\nNarrative: On the call, the first speaker (0.0 to 3.0 s) was scored synthetic by two detectors and claimed to be the member's grandson Jake. A second, genuine human speaker then requested a $9,500 wire to a new payee. The institution paused the transfer, contacted Jake, and notified the member's trusted contact.\nAmount: $9,500.00\nStatus: held, awaiting verification.",
+    "timeline": [],
+    "evidence": [],
+    "chain": { "ok": true, "bad_seq": null }
+  }
+}

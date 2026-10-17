@@ -1,0 +1,13 @@
+# Evaluated top to bottom, first match wins (SPEC M6).
+- id: clone_claims_contact
+  when: {any_segment: synthetic, claimed_contact: known}
+  do: [verify_contact, hold_new_payee, notify_trusted_contact]
+- id: clone_unknown_identity
+  when: {any_segment: synthetic, claimed_contact: unknown}
+  do: [hold_new_payee, notify_trusted_contact]
+- id: analysis_abstained
+  when: {abstain: true}
+  do: [hold_new_payee]
+- id: all_bona_fide
+  when: {all_segments: bona_fide}
+  do: []

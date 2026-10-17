@@ -1,0 +1,15 @@
+# Saved contacts per member. Phone numbers come only from here, never from the call.
+members:
+  grandma:
+    name: Grandma
+    contacts:
+      jake:
+        name: Jake
+        relation: grandson
+        phone: "+15550100001"
+        aliases: [jake, jacob]
+        relationship_words: [grandson, "your grandson"]
+    trusted_contact:
+      id: maria
+      name: Maria
+      phone: "+15550100002"
