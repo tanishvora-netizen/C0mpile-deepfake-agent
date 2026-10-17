@@ -1,0 +1,39 @@
+{
+  "clip_id": "b17e4f043475af50cab3aaa521e4b8509b858b0ee1b1c2bb212ef7037ab116b3",
+  "system": "adaptive",
+  "model": "claude-sonnet-5-5",
+  "segments": [
+    {
+      "start": 0.0,
+      "end": 6.0,
+      "speaker": "S1",
+      "label": "synthetic",
+      "tool_score": 0.95,
+      "evidence": [
+        {
+          "tool": "score_turns",
+          "field": "turns[0].p_fake (B)",
+          "value": 0.95
+        },
+        {
+          "tool": "score_turns",
+          "field": "turns[0].p_fake (A)",
+          "value": 0.93
+        }
+      ]
+    }
+  ],
+  "mixed": false,
+  "composition": "none",
+  "abstain": null,
+  "summary": "score_turns detectors A and B agree on every turn. Segments: S1 0.0-6.0 s synthetic.",
+  "trace_id": "fixture-g2",
+  "usage": {
+    "input_tokens": 1153,
+    "output_tokens": 123,
+    "tool_calls": 4,
+    "seconds": 0.4,
+    "usd": 0.0,
+    "mock_llm": true
+  }
+}

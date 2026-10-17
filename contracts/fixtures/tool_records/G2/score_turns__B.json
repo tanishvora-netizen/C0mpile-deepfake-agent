@@ -1,0 +1,29 @@
+{
+  "tool": "score_turns",
+  "version": "0.1.0",
+  "clip_id": "b17e4f043475af50cab3aaa521e4b8509b858b0ee1b1c2bb212ef7037ab116b3",
+  "params": {
+    "detector": "B"
+  },
+  "status": "ok",
+  "values": {
+    "detector": "B",
+    "turns": [
+      {
+        "idx": 0,
+        "start": 0.0,
+        "end": 6.0,
+        "p_fake": 0.95,
+        "too_short": false
+      }
+    ],
+    "clip_p_fake": 0.95
+  },
+  "validity": {
+    "min_duration_s": 1.0,
+    "sample_rate": 16000
+  },
+  "flags": [],
+  "runtime_ms": 40,
+  "error": null
+}

@@ -1,0 +1,48 @@
+{
+  "tool": "find_boundaries",
+  "version": "0.1.0",
+  "clip_id": "61f8f1b800701b00575ff7e372592a29b000e80b9213c154fdda8bc0e17c504a",
+  "params": {
+    "start": 0.0,
+    "end": 7.0,
+    "signals": [
+      "p_fake",
+      "speaker",
+      "channel"
+    ]
+  },
+  "status": "ok",
+  "values": {
+    "start": 0.0,
+    "end": 7.0,
+    "signals": [
+      "p_fake",
+      "speaker",
+      "channel"
+    ],
+    "change_points": [
+      {
+        "t": 3.0,
+        "moved": "p_fake",
+        "delta": 0.4
+      },
+      {
+        "t": 3.0,
+        "moved": "speaker",
+        "delta": 0.85
+      },
+      {
+        "t": 3.0,
+        "moved": "channel",
+        "delta": 0.3
+      }
+    ]
+  },
+  "validity": {
+    "min_duration_s": 1.0,
+    "sample_rate": 16000
+  },
+  "flags": [],
+  "runtime_ms": 40,
+  "error": null
+}

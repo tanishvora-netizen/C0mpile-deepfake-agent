@@ -1,0 +1,129 @@
+{
+  "G1": {
+    "duration_s": 6.0,
+    "mixed": false,
+    "composition": "none",
+    "composition_allowed": [
+      "none"
+    ],
+    "segments": [
+      {
+        "start": 0.0,
+        "end": 6.0,
+        "speaker": "S1",
+        "label": "bona_fide"
+      }
+    ]
+  },
+  "G2": {
+    "duration_s": 6.0,
+    "mixed": false,
+    "composition": "none",
+    "composition_allowed": [
+      "none"
+    ],
+    "segments": [
+      {
+        "start": 0.0,
+        "end": 6.0,
+        "speaker": "S1",
+        "label": "synthetic"
+      }
+    ]
+  },
+  "G3": {
+    "duration_s": 7.0,
+    "mixed": true,
+    "composition": "speaker_handoff",
+    "composition_allowed": [
+      "speaker_handoff"
+    ],
+    "segments": [
+      {
+        "start": 0.0,
+        "end": 3.0,
+        "speaker": "S1",
+        "label": "synthetic"
+      },
+      {
+        "start": 3.0,
+        "end": 7.0,
+        "speaker": "S2",
+        "label": "bona_fide"
+      }
+    ]
+  },
+  "G4": {
+    "duration_s": 7.0,
+    "mixed": false,
+    "composition": "none",
+    "composition_allowed": [
+      "none"
+    ],
+    "segments": [
+      {
+        "start": 0.0,
+        "end": 3.5,
+        "speaker": "S1",
+        "label": "bona_fide"
+      },
+      {
+        "start": 3.5,
+        "end": 7.0,
+        "speaker": "S2",
+        "label": "bona_fide"
+      }
+    ]
+  },
+  "G5": {
+    "duration_s": 8.0,
+    "mixed": true,
+    "composition": "splice",
+    "composition_allowed": [
+      "splice"
+    ],
+    "segments": [
+      {
+        "start": 0.0,
+        "end": 2.5,
+        "speaker": "S1",
+        "label": "bona_fide"
+      },
+      {
+        "start": 2.5,
+        "end": 5.5,
+        "speaker": "S1",
+        "label": "synthetic"
+      },
+      {
+        "start": 5.5,
+        "end": 8.0,
+        "speaker": "S1",
+        "label": "bona_fide"
+      }
+    ]
+  },
+  "G6": {
+    "duration_s": 7.0,
+    "mixed": true,
+    "composition": "speaker_handoff",
+    "composition_allowed": [
+      "speaker_handoff",
+      "overlay"
+    ],
+    "segments": [
+      {
+        "start": 0.0,
+        "end": 3.0,
+        "speaker": "S1",
+        "label": "synthetic"
+      },
+      {
+        "start": 3.0,
+        "end": 7.0,
+        "speaker": "S2",
+        "label": "bona_fide"
+      }
+    ]
+  }
+}

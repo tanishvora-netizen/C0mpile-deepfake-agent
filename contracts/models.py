@@ -1,6 +1,8 @@
 """Shared contracts (SPEC M0). Change only via CONTRACT_CHANGE.md."""
 from typing import Literal
+
 from pydantic import BaseModel
+
 
 class ClipMeta(BaseModel):
     clip_id: str                      # sha256 of decoded mono PCM

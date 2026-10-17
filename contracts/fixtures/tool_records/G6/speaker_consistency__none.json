@@ -1,0 +1,23 @@
+{
+  "tool": "speaker_consistency",
+  "version": "0.1.0",
+  "clip_id": "61f8f1b800701b00575ff7e372592a29b000e80b9213c154fdda8bc0e17c504a",
+  "params": {
+    "turn_a": 0,
+    "turn_b": 1
+  },
+  "status": "ok",
+  "values": {
+    "turn_a": 0,
+    "turn_b": 1,
+    "cosine": 0.12,
+    "same_speaker": false
+  },
+  "validity": {
+    "min_duration_s": 1.0,
+    "sample_rate": 16000
+  },
+  "flags": [],
+  "runtime_ms": 40,
+  "error": null
+}

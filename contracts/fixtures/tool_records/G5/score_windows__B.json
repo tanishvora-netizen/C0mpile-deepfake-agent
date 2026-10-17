@@ -1,0 +1,64 @@
+{
+  "tool": "score_windows",
+  "version": "0.1.0",
+  "clip_id": "b9105ce2fa8633141669fb52d7af856eead4bb5998c1d7825c8dd62b315929fa",
+  "params": {
+    "detector": "B",
+    "start": 0.0,
+    "end": 8.0,
+    "window_s": 2,
+    "hop_s": 1
+  },
+  "status": "ok",
+  "values": {
+    "detector": "B",
+    "window_s": 2,
+    "hop_s": 1,
+    "start": 0.0,
+    "end": 8.0,
+    "windows": [
+      {
+        "start": 0.0,
+        "end": 2.0,
+        "p_fake": 0.08
+      },
+      {
+        "start": 1.0,
+        "end": 3.0,
+        "p_fake": 0.29
+      },
+      {
+        "start": 2.0,
+        "end": 4.0,
+        "p_fake": 0.71
+      },
+      {
+        "start": 3.0,
+        "end": 5.0,
+        "p_fake": 0.92
+      },
+      {
+        "start": 4.0,
+        "end": 6.0,
+        "p_fake": 0.705
+      },
+      {
+        "start": 5.0,
+        "end": 7.0,
+        "p_fake": 0.275
+      },
+      {
+        "start": 6.0,
+        "end": 8.0,
+        "p_fake": 0.06
+      }
+    ]
+  },
+  "validity": {
+    "min_duration_s": 1.0,
+    "sample_rate": 16000
+  },
+  "flags": [],
+  "runtime_ms": 40,
+  "error": null
+}

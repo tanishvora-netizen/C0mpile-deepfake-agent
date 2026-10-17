@@ -1,0 +1,77 @@
+{
+  "clip_id": "b9105ce2fa8633141669fb52d7af856eead4bb5998c1d7825c8dd62b315929fa",
+  "system": "adaptive",
+  "model": "claude-sonnet-5-5",
+  "segments": [
+    {
+      "start": 0.0,
+      "end": 2.5,
+      "speaker": "S1",
+      "label": "bona_fide",
+      "tool_score": 0.08,
+      "evidence": [
+        {
+          "tool": "score_windows",
+          "field": "windows.p_fake (B, range mean)",
+          "value": 0.185
+        },
+        {
+          "tool": "find_boundaries",
+          "field": "change_points.moved",
+          "value": "p_fake"
+        }
+      ]
+    },
+    {
+      "start": 2.5,
+      "end": 5.5,
+      "speaker": "S1",
+      "label": "synthetic",
+      "tool_score": 0.92,
+      "evidence": [
+        {
+          "tool": "score_windows",
+          "field": "windows.p_fake (B, range mean)",
+          "value": 0.778
+        },
+        {
+          "tool": "find_boundaries",
+          "field": "change_points.moved",
+          "value": "p_fake"
+        }
+      ]
+    },
+    {
+      "start": 5.5,
+      "end": 8.0,
+      "speaker": "S1",
+      "label": "bona_fide",
+      "tool_score": 0.06,
+      "evidence": [
+        {
+          "tool": "score_windows",
+          "field": "windows.p_fake (B, range mean)",
+          "value": 0.168
+        },
+        {
+          "tool": "find_boundaries",
+          "field": "change_points.moved",
+          "value": "p_fake"
+        }
+      ]
+    }
+  ],
+  "mixed": true,
+  "composition": "splice",
+  "abstain": null,
+  "summary": "find_boundaries moved p_fake at 2.5, 5.5 s inside turn 0, so it was split. Segments: S1 0.0-2.5 s bona_fide; S1 2.5-5.5 s synthetic; S1 5.5-8.0 s bona_fide. find_boundaries shows p_fake moving at the join, a splice.",
+  "trace_id": "fixture-g5",
+  "usage": {
+    "input_tokens": 2104,
+    "output_tokens": 315,
+    "tool_calls": 5,
+    "seconds": 0.4,
+    "usd": 0.0,
+    "mock_llm": true
+  }
+}

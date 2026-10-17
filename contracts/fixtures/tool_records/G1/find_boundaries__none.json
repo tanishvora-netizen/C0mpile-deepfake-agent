@@ -1,0 +1,32 @@
+{
+  "tool": "find_boundaries",
+  "version": "0.1.0",
+  "clip_id": "9381306c77c74376089350da606b017d6b50cefa14faee8e95da27a2d546386a",
+  "params": {
+    "start": 0.0,
+    "end": 6.0,
+    "signals": [
+      "p_fake",
+      "speaker",
+      "channel"
+    ]
+  },
+  "status": "ok",
+  "values": {
+    "start": 0.0,
+    "end": 6.0,
+    "signals": [
+      "p_fake",
+      "speaker",
+      "channel"
+    ],
+    "change_points": []
+  },
+  "validity": {
+    "min_duration_s": 1.0,
+    "sample_rate": 16000
+  },
+  "flags": [],
+  "runtime_ms": 40,
+  "error": null
+}

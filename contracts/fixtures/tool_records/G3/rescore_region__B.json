@@ -1,0 +1,26 @@
+{
+  "tool": "rescore_region",
+  "version": "0.1.0",
+  "clip_id": "f83a6167b93406140fdadd00890143f7c2b77907325609db85a8f01380f6103b",
+  "params": {
+    "detector": "B",
+    "start": 0.0,
+    "end": 3.0,
+    "context_s": 30
+  },
+  "status": "ok",
+  "values": {
+    "detector": "B",
+    "start": 0.0,
+    "end": 3.0,
+    "context_s": 30,
+    "p_fake": 0.95
+  },
+  "validity": {
+    "min_duration_s": 1.0,
+    "sample_rate": 16000
+  },
+  "flags": [],
+  "runtime_ms": 40,
+  "error": null
+}

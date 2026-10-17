@@ -1,0 +1,63 @@
+{
+  "clip_id": "61f8f1b800701b00575ff7e372592a29b000e80b9213c154fdda8bc0e17c504a",
+  "system": "adaptive",
+  "model": "claude-sonnet-5-5",
+  "segments": [
+    {
+      "start": 0.0,
+      "end": 3.0,
+      "speaker": "S1",
+      "label": "synthetic",
+      "tool_score": 0.81,
+      "evidence": [
+        {
+          "tool": "rescore_region",
+          "field": "p_fake (A, 0.0-3.0 s, 30 s context)",
+          "value": 0.81
+        },
+        {
+          "tool": "score_turns",
+          "field": "turns[0].p_fake (B)",
+          "value": 0.62
+        },
+        {
+          "tool": "score_turns",
+          "field": "turns[0].p_fake (A)",
+          "value": 0.3
+        }
+      ]
+    },
+    {
+      "start": 3.0,
+      "end": 7.0,
+      "speaker": "S2",
+      "label": "bona_fide",
+      "tool_score": 0.22,
+      "evidence": [
+        {
+          "tool": "score_turns",
+          "field": "turns[1].p_fake (B)",
+          "value": 0.22
+        },
+        {
+          "tool": "score_turns",
+          "field": "turns[1].p_fake (A)",
+          "value": 0.1
+        }
+      ]
+    }
+  ],
+  "mixed": true,
+  "composition": "speaker_handoff",
+  "abstain": null,
+  "summary": "score_turns detectors A and B disagreed on turn 0 (0.30 vs 0.62), so rescore_region settled it as synthetic (0.81). Segments: S1 0.0-3.0 s synthetic; S2 3.0-7.0 s bona_fide. find_boundaries shows p_fake and speaker moving at the join, a speaker handoff.",
+  "trace_id": "fixture-g6",
+  "usage": {
+    "input_tokens": 2286,
+    "output_tokens": 271,
+    "tool_calls": 5,
+    "seconds": 0.4,
+    "usd": 0.0,
+    "mock_llm": true
+  }
+}

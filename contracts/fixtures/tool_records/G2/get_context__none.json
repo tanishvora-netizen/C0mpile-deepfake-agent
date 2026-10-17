@@ -1,0 +1,43 @@
+{
+  "tool": "get_context",
+  "version": "0.1.0",
+  "clip_id": "b17e4f043475af50cab3aaa521e4b8509b858b0ee1b1c2bb212ef7037ab116b3",
+  "params": {},
+  "status": "ok",
+  "values": {
+    "duration_s": 6.0,
+    "speech_segments": [
+      {
+        "start": 0.0,
+        "end": 6.0
+      }
+    ],
+    "turns": [
+      {
+        "idx": 0,
+        "speaker": "S1",
+        "start": 0.0,
+        "end": 6.0
+      }
+    ],
+    "language": "en",
+    "language_conf": 0.98,
+    "per_turn": [
+      {
+        "idx": 0,
+        "bandwidth_hz": 3400,
+        "clipping_frac": 0.0,
+        "snr_db": 24.0,
+        "too_short": false
+      }
+    ],
+    "mos": 3.4
+  },
+  "validity": {
+    "min_duration_s": 1.0,
+    "sample_rate": 16000
+  },
+  "flags": [],
+  "runtime_ms": 40,
+  "error": null
+}

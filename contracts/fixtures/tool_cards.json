@@ -1,0 +1,420 @@
+[
+  {
+    "name": "get_context",
+    "version": "0.1.0",
+    "description": "Speech segments, speaker turns, language, per-turn bandwidth, clipping, SNR and MOS. Call first; every other tool refers to the turns it returns.",
+    "args_schema": {
+      "type": "object",
+      "properties": {
+        "clip_id": {
+          "type": "string",
+          "description": "clip_id returned by intake"
+        }
+      },
+      "required": [
+        "clip_id"
+      ]
+    },
+    "values_schema": {
+      "type": "object",
+      "properties": {
+        "duration_s": {
+          "type": "number"
+        },
+        "speech_segments": {
+          "type": "array"
+        },
+        "turns": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "language": {
+          "type": "string"
+        },
+        "language_conf": {
+          "type": "number"
+        },
+        "per_turn": {
+          "type": "array"
+        },
+        "mos": {
+          "type": "number"
+        }
+      }
+    },
+    "known_weaknesses": [
+      "Diarization can merge two similar voices into one turn",
+      "Short turns are unreliable"
+    ]
+  },
+  {
+    "name": "score_turns",
+    "version": "0.1.0",
+    "description": "p_fake per speaker turn from one detector (A or B), plus a whole-clip p_fake.",
+    "args_schema": {
+      "type": "object",
+      "properties": {
+        "clip_id": {
+          "type": "string",
+          "description": "clip_id returned by intake"
+        },
+        "detector": {
+          "type": "string",
+          "enum": [
+            "A",
+            "B"
+          ],
+          "description": "A = AntiDeepfake, B = XLS-R + SLS"
+        }
+      },
+      "required": [
+        "clip_id",
+        "detector"
+      ]
+    },
+    "values_schema": {
+      "type": "object",
+      "properties": {
+        "detector": {
+          "type": "string"
+        },
+        "turns": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "idx": {
+                "type": "integer"
+              },
+              "start": {
+                "type": "number",
+                "minimum": 0
+              },
+              "end": {
+                "type": "number",
+                "minimum": 0
+              },
+              "p_fake": {
+                "type": "number",
+                "minimum": 0
+              }
+            }
+          }
+        },
+        "clip_p_fake": {
+          "type": "number"
+        }
+      }
+    },
+    "known_weaknesses": [
+      "Whole-clip score dilutes a short fake inside a long real clip",
+      "Detector A misses some cloned voices under telephone bandwidth"
+    ]
+  },
+  {
+    "name": "score_windows",
+    "version": "0.1.0",
+    "description": "p_fake track over sliding windows inside a time range, from one detector.",
+    "args_schema": {
+      "type": "object",
+      "properties": {
+        "clip_id": {
+          "type": "string",
+          "description": "clip_id returned by intake"
+        },
+        "detector": {
+          "type": "string",
+          "enum": [
+            "A",
+            "B"
+          ],
+          "description": "A = AntiDeepfake, B = XLS-R + SLS"
+        },
+        "start": {
+          "type": "number",
+          "minimum": 0
+        },
+        "end": {
+          "type": "number",
+          "minimum": 0
+        },
+        "window_s": {
+          "type": "number",
+          "enum": [
+            2,
+            4,
+            10
+          ]
+        },
+        "hop_s": {
+          "type": "number",
+          "minimum": 0.25
+        }
+      },
+      "required": [
+        "clip_id",
+        "detector"
+      ]
+    },
+    "values_schema": {
+      "type": "object",
+      "properties": {
+        "windows": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "idx": {
+                "type": "integer"
+              },
+              "start": {
+                "type": "number",
+                "minimum": 0
+              },
+              "end": {
+                "type": "number",
+                "minimum": 0
+              },
+              "p_fake": {
+                "type": "number",
+                "minimum": 0
+              }
+            }
+          }
+        },
+        "window_s": {
+          "type": "number"
+        }
+      }
+    },
+    "known_weaknesses": [
+      "Windows shorter than 2 s are noisy",
+      "Windows straddling a boundary blend both sides"
+    ]
+  },
+  {
+    "name": "rescore_region",
+    "version": "0.1.0",
+    "description": "Re-score one time range with one detector using up to 30 s of surrounding context. Use it to settle a turn where detectors A and B disagree.",
+    "args_schema": {
+      "type": "object",
+      "properties": {
+        "clip_id": {
+          "type": "string",
+          "description": "clip_id returned by intake"
+        },
+        "detector": {
+          "type": "string",
+          "enum": [
+            "A",
+            "B"
+          ],
+          "description": "A = AntiDeepfake, B = XLS-R + SLS"
+        },
+        "start": {
+          "type": "number",
+          "minimum": 0
+        },
+        "end": {
+          "type": "number",
+          "minimum": 0
+        },
+        "context_s": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 30
+        }
+      },
+      "required": [
+        "clip_id",
+        "detector",
+        "start",
+        "end"
+      ]
+    },
+    "values_schema": {
+      "type": "object",
+      "properties": {
+        "detector": {
+          "type": "string"
+        },
+        "start": {
+          "type": "number",
+          "minimum": 0
+        },
+        "end": {
+          "type": "number",
+          "minimum": 0
+        },
+        "p_fake": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "known_weaknesses": [
+      "Context can include the other speaker, which pulls the score toward that side"
+    ]
+  },
+  {
+    "name": "find_boundaries",
+    "version": "0.1.0",
+    "description": "Change points over the p_fake track and channel features. Each change point names the signal that moved: p_fake (authenticity change), speaker (speaker change) or channel.",
+    "args_schema": {
+      "type": "object",
+      "properties": {
+        "clip_id": {
+          "type": "string",
+          "description": "clip_id returned by intake"
+        },
+        "start": {
+          "type": "number",
+          "minimum": 0
+        },
+        "end": {
+          "type": "number",
+          "minimum": 0
+        },
+        "signals": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "p_fake",
+              "speaker",
+              "channel"
+            ]
+          }
+        }
+      },
+      "required": [
+        "clip_id"
+      ]
+    },
+    "values_schema": {
+      "type": "object",
+      "properties": {
+        "change_points": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "known_weaknesses": [
+      "A speaker or channel change alone is not evidence of synthesis",
+      "Resolution is about 0.25 s"
+    ]
+  },
+  {
+    "name": "speaker_consistency",
+    "version": "0.1.0",
+    "description": "Cosine similarity of speaker embeddings for two turns, and whether they are the same speaker.",
+    "args_schema": {
+      "type": "object",
+      "properties": {
+        "clip_id": {
+          "type": "string",
+          "description": "clip_id returned by intake"
+        },
+        "turn_a": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "turn_b": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "clip_id",
+        "turn_a",
+        "turn_b"
+      ]
+    },
+    "values_schema": {
+      "type": "object",
+      "properties": {
+        "cosine": {
+          "type": "number"
+        },
+        "same_speaker": {
+          "type": "boolean"
+        }
+      }
+    },
+    "known_weaknesses": [
+      "Unreliable on turns under 2 s",
+      "A cloned voice can match its target closely"
+    ]
+  },
+  {
+    "name": "localize",
+    "version": "0.1.0",
+    "description": "(optional) Frame-level fake localizer summarized into segments.",
+    "args_schema": {
+      "type": "object",
+      "properties": {
+        "clip_id": {
+          "type": "string",
+          "description": "clip_id returned by intake"
+        },
+        "start": {
+          "type": "number",
+          "minimum": 0
+        },
+        "end": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "clip_id",
+        "start",
+        "end"
+      ]
+    },
+    "values_schema": {
+      "type": "object",
+      "properties": {
+        "segments": {
+          "type": "array"
+        }
+      }
+    },
+    "known_weaknesses": [
+      "Not installed in this build"
+    ]
+  },
+  {
+    "name": "separate",
+    "version": "0.1.0",
+    "description": "(optional) Speech/background separation; returns the clip_id of the speech stem.",
+    "args_schema": {
+      "type": "object",
+      "properties": {
+        "clip_id": {
+          "type": "string",
+          "description": "clip_id returned by intake"
+        }
+      },
+      "required": [
+        "clip_id"
+      ]
+    },
+    "values_schema": {
+      "type": "object",
+      "properties": {
+        "stem_clip_id": {
+          "type": "string"
+        }
+      }
+    },
+    "known_weaknesses": [
+      "Not installed in this build"
+    ]
+  }
+]

@@ -1,0 +1,39 @@
+{
+  "clip_id": "9381306c77c74376089350da606b017d6b50cefa14faee8e95da27a2d546386a",
+  "system": "adaptive",
+  "model": "claude-sonnet-5-5",
+  "segments": [
+    {
+      "start": 0.0,
+      "end": 6.0,
+      "speaker": "S1",
+      "label": "bona_fide",
+      "tool_score": 0.06,
+      "evidence": [
+        {
+          "tool": "score_turns",
+          "field": "turns[0].p_fake (B)",
+          "value": 0.06
+        },
+        {
+          "tool": "score_turns",
+          "field": "turns[0].p_fake (A)",
+          "value": 0.04
+        }
+      ]
+    }
+  ],
+  "mixed": false,
+  "composition": "none",
+  "abstain": null,
+  "summary": "score_turns detectors A and B agree on every turn. Segments: S1 0.0-6.0 s bona_fide.",
+  "trace_id": "fixture-g1",
+  "usage": {
+    "input_tokens": 1153,
+    "output_tokens": 123,
+    "tool_calls": 4,
+    "seconds": 0.4,
+    "usd": 0.0,
+    "mock_llm": true
+  }
+}

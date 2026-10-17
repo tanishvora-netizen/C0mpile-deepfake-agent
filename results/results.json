@@ -1,0 +1,236 @@
+{
+  "provenance": "mock",
+  "note": "Mock tools and mock LLM on placeholder golden clips; not a real measurement.",
+  "clips": [
+    "G1",
+    "G2",
+    "G3",
+    "G4",
+    "G5",
+    "G6"
+  ],
+  "systems": {
+    "baseline": {
+      "G1": {
+        "accuracy": 1.0,
+        "mixed_ok": true,
+        "composition_ok": true,
+        "abstain": null,
+        "tool_calls": 5,
+        "usd": 0.0
+      },
+      "G2": {
+        "accuracy": 1.0,
+        "mixed_ok": true,
+        "composition_ok": true,
+        "abstain": null,
+        "tool_calls": 5,
+        "usd": 0.0
+      },
+      "G3": {
+        "accuracy": 1.0,
+        "mixed_ok": true,
+        "composition_ok": true,
+        "abstain": null,
+        "tool_calls": 6,
+        "usd": 0.0
+      },
+      "G4": {
+        "accuracy": 1.0,
+        "mixed_ok": true,
+        "composition_ok": true,
+        "abstain": null,
+        "tool_calls": 6,
+        "usd": 0.0
+      },
+      "G5": {
+        "accuracy": 1.0,
+        "mixed_ok": true,
+        "composition_ok": true,
+        "abstain": null,
+        "tool_calls": 5,
+        "usd": 0.0
+      },
+      "G6": {
+        "accuracy": 0.5,
+        "mixed_ok": false,
+        "composition_ok": false,
+        "abstain": null,
+        "tool_calls": 6,
+        "usd": 0.0
+      }
+    },
+    "fixed": {
+      "G1": {
+        "accuracy": 1.0,
+        "mixed_ok": true,
+        "composition_ok": true,
+        "abstain": null,
+        "tool_calls": 5,
+        "usd": 0.0
+      },
+      "G2": {
+        "accuracy": 1.0,
+        "mixed_ok": true,
+        "composition_ok": true,
+        "abstain": null,
+        "tool_calls": 5,
+        "usd": 0.0
+      },
+      "G3": {
+        "accuracy": 1.0,
+        "mixed_ok": true,
+        "composition_ok": true,
+        "abstain": null,
+        "tool_calls": 6,
+        "usd": 0.0
+      },
+      "G4": {
+        "accuracy": 1.0,
+        "mixed_ok": true,
+        "composition_ok": true,
+        "abstain": null,
+        "tool_calls": 6,
+        "usd": 0.0
+      },
+      "G5": {
+        "accuracy": 1.0,
+        "mixed_ok": true,
+        "composition_ok": true,
+        "abstain": null,
+        "tool_calls": 5,
+        "usd": 0.0
+      },
+      "G6": {
+        "accuracy": 0.5,
+        "mixed_ok": false,
+        "composition_ok": false,
+        "abstain": null,
+        "tool_calls": 6,
+        "usd": 0.0
+      }
+    },
+    "adaptive": {
+      "G1": {
+        "accuracy": 1.0,
+        "mixed_ok": true,
+        "composition_ok": true,
+        "abstain": null,
+        "tool_calls": 4,
+        "usd": 0.0
+      },
+      "G2": {
+        "accuracy": 1.0,
+        "mixed_ok": true,
+        "composition_ok": true,
+        "abstain": null,
+        "tool_calls": 4,
+        "usd": 0.0
+      },
+      "G3": {
+        "accuracy": 1.0,
+        "mixed_ok": true,
+        "composition_ok": true,
+        "abstain": null,
+        "tool_calls": 5,
+        "usd": 0.0
+      },
+      "G4": {
+        "accuracy": 1.0,
+        "mixed_ok": true,
+        "composition_ok": true,
+        "abstain": null,
+        "tool_calls": 4,
+        "usd": 0.0
+      },
+      "G5": {
+        "accuracy": 1.0,
+        "mixed_ok": true,
+        "composition_ok": true,
+        "abstain": null,
+        "tool_calls": 5,
+        "usd": 0.0
+      },
+      "G6": {
+        "accuracy": 1.0,
+        "mixed_ok": true,
+        "composition_ok": true,
+        "abstain": null,
+        "tool_calls": 5,
+        "usd": 0.0
+      }
+    },
+    "A alone (clip level)": {
+      "G1": {
+        "accuracy": 1.0,
+        "mixed_ok": null,
+        "composition_ok": null,
+        "abstain": null,
+        "tool_calls": 1,
+        "usd": 0.0
+      },
+      "G2": {
+        "accuracy": 1.0,
+        "mixed_ok": null,
+        "composition_ok": null,
+        "abstain": null,
+        "tool_calls": 1,
+        "usd": 0.0
+      },
+      "G3": {
+        "accuracy": 0.5,
+        "mixed_ok": null,
+        "composition_ok": null,
+        "abstain": null,
+        "tool_calls": 1,
+        "usd": 0.0
+      },
+      "G4": {
+        "accuracy": 1.0,
+        "mixed_ok": null,
+        "composition_ok": null,
+        "abstain": null,
+        "tool_calls": 1,
+        "usd": 0.0
+      },
+      "G5": {
+        "accuracy": 0.6666666666666666,
+        "mixed_ok": null,
+        "composition_ok": null,
+        "abstain": null,
+        "tool_calls": 1,
+        "usd": 0.0
+      },
+      "G6": {
+        "accuracy": 0.5,
+        "mixed_ok": null,
+        "composition_ok": null,
+        "abstain": null,
+        "tool_calls": 1,
+        "usd": 0.0
+      }
+    }
+  },
+  "summary": {
+    "baseline": {
+      "mean_turn_accuracy": 0.9166666666666666,
+      "abstain_rate": 0.0,
+      "mean_tool_calls": 5.5
+    },
+    "fixed": {
+      "mean_turn_accuracy": 0.9166666666666666,
+      "abstain_rate": 0.0,
+      "mean_tool_calls": 5.5
+    },
+    "adaptive": {
+      "mean_turn_accuracy": 1.0,
+      "abstain_rate": 0.0,
+      "mean_tool_calls": 4.5
+    },
+    "A alone (clip level)": {
+      "mean_turn_accuracy": 0.7777777777777778,
+      "abstain_rate": 0.0,
+      "mean_tool_calls": 1.0
+    }
+  }
+}
