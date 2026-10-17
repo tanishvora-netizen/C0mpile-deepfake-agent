@@ -71,13 +71,17 @@ def score_turns(clip_id: str, params: dict) -> dict:
 def score_windows(clip_id: str, params: dict) -> dict:
     det, w, hop = params["detector"], float(params["window_s"]), float(params.get("hop_s") or params["window_s"] / 2)
     s, e = float(params["start"]), float(params["end"])
-    wins, t = [], s
-    while t + w <= e + 1e-6 or not wins:
-        hi = min(t + w, e)
-        wins.append({"start": round(t, 2), "end": round(hi, 2), "p_fake": _score(clip_id, det, round(t, 2), round(hi, 2))})
-        t += hop
-        if hi >= e:
-            break
+    if (w, hop) == (WIN_S, HOP_S):  # same windows find_boundaries already scored, so these are cache hits
+        spans = _windows(s, e)
+    else:
+        spans, t = [], s
+        while t + w <= e + 1e-6 or not spans:
+            hi = min(t + w, e)
+            spans.append((round(t, 2), round(hi, 2)))
+            t += hop
+            if hi >= e:
+                break
+    wins = [{"start": a, "end": b, "p_fake": _score(clip_id, det, a, b)} for a, b in spans]
     return {"detector": det, "window_s": w, "hop_s": hop, "start": s, "end": e, "windows": wins}
 
 

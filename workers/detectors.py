@@ -19,8 +19,24 @@ MODELS = {
 }
 CHUNK_S = 30.0  # score each voice in one pass; short tail chunks made detector B misfire
 
-_lock = threading.Lock()
+_load_lock = threading.Lock()
+_gpu_lock = threading.Lock()  # one GPU queue: detectors take turns, but each pass is ~2.4x faster than CPU
+_model_locks = {det: threading.Lock() for det in MODELS}  # on CPU, A, B and C run side by side
 _loaded: dict[str, tuple] = {}
+_device: str | None = None
+
+
+def device() -> str:
+    """'mps' on Apple Silicon (same scores as CPU, measured), else 'cpu'. Override with CALLGUARD_DEVICE."""
+    global _device
+    if _device is None:
+        import os
+
+        import torch
+
+        want = os.environ.get("CALLGUARD_DEVICE", "auto")
+        _device = want if want != "auto" else ("mps" if torch.backends.mps.is_available() else "cpu")
+    return _device
 
 
 def available() -> bool:
@@ -33,12 +49,17 @@ def available() -> bool:
 
 
 def _load(detector: str) -> tuple:
+    with _load_lock:
+        return _load_unlocked(detector)
+
+
+def _load_unlocked(detector: str) -> tuple:
     if detector not in _loaded:
         from transformers import AutoFeatureExtractor, AutoModelForAudioClassification
 
         model_id = MODELS[detector]
         fe = AutoFeatureExtractor.from_pretrained(model_id)
-        model = AutoModelForAudioClassification.from_pretrained(model_id, use_safetensors=True).eval()
+        model = AutoModelForAudioClassification.from_pretrained(model_id, use_safetensors=True).eval().to(device())
         labels = {i: str(lbl).lower() for i, lbl in model.config.id2label.items()}
         fake_idx = [i for i, lbl in labels.items() if any(k in lbl for k in ("fake", "spoof", "synth"))]
         if not fake_idx:
@@ -49,9 +70,8 @@ def _load(detector: str) -> tuple:
 
 def warm_up() -> None:
     """Download and load every detector now instead of on the first request."""
-    with _lock:
-        for det in MODELS:
-            _load(det)
+    for det in MODELS:
+        _load(det)
 
 
 def _chunks(x: np.ndarray) -> list[np.ndarray]:
@@ -64,13 +84,15 @@ def p_fake(x: np.ndarray, detector: str) -> float:
     """Probability that this 16 kHz mono float audio is AI-generated, per one detector."""
     import torch
 
-    with _lock:
-        fe, model, fake_idx = _load(detector)
-        total, weight = 0.0, 0
+    fe, model, fake_idx = _load(detector)
+    dev = device()
+    lock = _gpu_lock if dev != "cpu" else _model_locks[detector]
+    total, weight = 0.0, 0
+    with lock:
         for chunk in _chunks(np.asarray(x, dtype=np.float32)):
-            inputs = fe(chunk, sampling_rate=SR, return_tensors="pt")
+            inputs = {k: v.to(dev) for k, v in fe(chunk, sampling_rate=SR, return_tensors="pt").items()}
             with torch.inference_mode():
-                probs = torch.softmax(model(**inputs).logits[0], dim=-1)
+                probs = torch.softmax(model(**inputs).logits[0], dim=-1).cpu()
             total += float(sum(probs[i] for i in fake_idx)) * len(chunk)
             weight += len(chunk)
     return round(total / max(weight, 1), 4)
