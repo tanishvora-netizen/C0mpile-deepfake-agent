@@ -1,6 +1,6 @@
 import type {
   AnalysisResult, CaseEvent, CaseState, CaseView, ChainStatus, ClipMeta, GoldenClip, Mode,
-  Packet, TraceEvent, Transfer, Action,
+  Packet, TraceEvent, Transfer, Action, TranscriptLine,
 } from './types'
 import g3Trace from './fixtures/g3_trace.json'
 import g3Case from './fixtures/g3_case.json'
@@ -38,14 +38,38 @@ const fx = {
   caseState: 'OPEN' as CaseState,
   transfers: new Map<string, Transfer>(),
   n: 0,
+  tampered: false,
 }
 
 // ---- clips ----
 export async function listGolden(): Promise<GoldenClip[]> {
   if (isFixtures()) {
-    return ['G1', 'G2', 'G3', 'G4', 'G5', 'G6'].map((name) => ({ name, clip_id: name.toLowerCase() }))
+    const titles: [string, string][] = [
+      ['G1', 'Normal call'],
+      ['G2', 'Fully cloned call'],
+      ['G3', 'Grandparent scam'],
+      ['G4', 'Two real people'],
+      ['G5', 'Hidden clone insert'],
+      ['G6', 'Scam call with music'],
+    ]
+    return titles.map(([name, title]) => ({ name, title, clip_id: name.toLowerCase() }))
   }
   return http<GoldenClip[]>('/clips/golden')
+}
+
+/** URL of the playable audio for a clip (null in fixtures mode, which has no audio). */
+export function clipAudioUrl(clipId: string): string | null {
+  return isFixtures() ? null : `${API_BASE}/clips/${clipId}/audio`
+}
+
+const FX_TRANSCRIPT: TranscriptLine[] = [
+  { start: 0, end: 3, speaker: 'S1', who: "Caller says they're Jake", text: "Grandma, it's Jake, I'm in trouble." },
+  { start: 3, end: 7, speaker: 'S2', who: "Second voice: 'Lawyer'", text: "I'm his attorney. I need a $9,500 wire to post bail, right away." },
+]
+
+export async function getTranscript(clipId: string): Promise<TranscriptLine[]> {
+  if (isFixtures()) return FX_TRANSCRIPT
+  return http<TranscriptLine[]>(`/clips/${clipId}/transcript`)
 }
 
 export async function uploadClip(file: File): Promise<ClipMeta> {
@@ -168,12 +192,17 @@ export async function openCase(jobId: string, memberId = 'grandma'): Promise<Cas
 }
 
 export async function getCase(caseId: string): Promise<CaseView> {
-  if (isFixtures()) return { ...fxCase.case, state: fx.caseState }
+  if (isFixtures()) {
+    return {
+      ...fxCase.case, state: fx.caseState,
+      chain: fx.tampered ? { ok: false, bad_seq: 3 } : fxCase.case.chain,
+    }
+  }
   return toCaseView(await http<unknown>(`/cases/${caseId}`), caseId)
 }
 
 export async function getPacket(caseId: string): Promise<Packet> {
-  if (isFixtures()) return fxCase.packet
+  if (isFixtures()) return fx.tampered ? { ...fxCase.packet, chain: { ok: false, bad_seq: 3 } } : fxCase.packet
   const r = asObj(await http<unknown>(`/cases/${caseId}/packet`))
   const str = (v: unknown) => (typeof v === 'string' ? v : v == null ? '' : JSON.stringify(v, null, 2))
   return {
@@ -181,6 +210,16 @@ export async function getPacket(caseId: string): Promise<Packet> {
     sar_draft: str(r.sar_draft),
     chain: r.chain ? (r.chain as ChainStatus) : null,
   }
+}
+
+/** Demo only: alters a stored audit entry so the hash chain breaks. */
+export async function tamperCase(caseId: string): Promise<void> {
+  if (isFixtures()) {
+    await sleep(300)
+    fx.tampered = true
+    return
+  }
+  await post<unknown>('/dev/tamper', { case_id: caseId })
 }
 
 export async function simulateReply(caseId: string, reply: 'YES' | 'NO'): Promise<void> {

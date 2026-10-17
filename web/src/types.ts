@@ -13,6 +13,17 @@ export interface ClipMeta {
 export interface GoldenClip {
   name: string
   clip_id: string
+  title?: string
+  description?: string
+  duration_s?: number
+}
+
+export interface TranscriptLine {
+  start: number
+  end: number
+  speaker: string
+  who?: string
+  text: string
 }
 
 export interface Evidence {

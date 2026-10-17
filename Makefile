@@ -4,7 +4,7 @@ export MOCK_TWILIO ?= 1
 export DATA_DIR ?= ./var
 PY = uv run
 
-.PHONY: dev api web test smoke lint golden eval
+.PHONY: dev api web test smoke lint golden eval demo
 
 golden:
 	$(PY) python scripts/make_golden.py
@@ -33,3 +33,6 @@ smoke:
 
 eval:
 	$(PY) python -m baseline_eval.run_eval
+
+demo:
+	bash scripts/demo.sh

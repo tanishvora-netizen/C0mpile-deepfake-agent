@@ -39,20 +39,20 @@ export function ClipPicker({ picked, onPick, disabled }: {
 
   return (
     <Card title="1. Clip">
-      <div className="flex flex-wrap gap-2" role="group" aria-label="Golden clips">
+      <div className="flex flex-wrap gap-2" role="group" aria-label="Example calls">
         {golden.map((g) => {
           const on = picked?.clip_id === g.clip_id
           return (
             <button
               key={g.name}
               disabled={disabled}
-              onClick={() => onPick({ clip_id: g.clip_id, label: g.name })}
+              onClick={() => onPick({ clip_id: g.clip_id, label: g.title ?? g.name })}
               aria-pressed={on}
               className={`min-h-10 min-w-12 rounded-md border px-3 py-1.5 text-sm font-semibold transition disabled:opacity-50 ${
                 on ? 'border-accent bg-accent text-white' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
               }`}
             >
-              {g.name}
+              {g.title ?? g.name}
             </button>
           )
         })}
