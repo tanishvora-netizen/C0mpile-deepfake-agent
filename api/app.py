@@ -93,7 +93,22 @@ def _load_golden() -> None:
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     await asyncio.to_thread(_load_golden)
+    if _detection_mode() == "live":  # load the models now so the first check is not slow
+        threading.Thread(target=_warm_up_models, daemon=True).start()
     yield
+
+
+def _warm_up_models() -> None:
+    try:
+        from workers import detectors
+
+        detectors.warm_up()
+        if _transcription_available():
+            from policy_actions import claim
+
+            claim.transcribe_warm_up()
+    except Exception as exc:  # noqa: BLE001 - a failed warm-up just means a slower first request
+        jlog("warm_up_failed", case_id="-", error=str(exc)[:200])
 
 
 app = FastAPI(title="CallGuard API", lifespan=lifespan)

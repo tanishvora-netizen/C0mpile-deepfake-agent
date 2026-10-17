@@ -42,6 +42,15 @@ def _golden_name(clip_id: str) -> str | None:
 _WHISPER = None  # faster-whisper model, loaded on first real transcription
 
 
+def transcribe_warm_up() -> None:
+    """Load the Whisper model ahead of the first real transcription."""
+    global _WHISPER
+    if _WHISPER is None:
+        from faster_whisper import WhisperModel
+
+        _WHISPER = WhisperModel("base.en", device="cpu", compute_type="int8")
+
+
 def transcribe(clip_id: str, start: float, end: float) -> str:
     """Text of one segment. Mock mode serves fixtures; real mode uses faster-whisper if installed."""
     if os.environ.get("MOCK_TOOLS", "1") != "0":
