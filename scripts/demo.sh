@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# One command to set up and launch the CallGuard demo (mock mode: no GPU, no network, no API keys).
+# One command to set up and launch CallGuard (no GPU or API keys needed).
 #
 #   bash scripts/demo.sh             live detection: 3 local AI-voice detectors + Whisper transcription
 #   bash scripts/demo.sh --check     also run the tests and the end-to-end smoke check first
@@ -13,7 +13,7 @@ cd "$ROOT"
 
 API_PORT=8000
 WEB_PORT=5173
-DEMO_URL="http://localhost:${WEB_PORT}/demo"
+DEMO_URL="http://localhost:${WEB_PORT}/"
 MODE=live
 [[ " $* " == *" --scripted "* ]] && MODE=scripted
 export MOCK_LLM=1 MOCK_TWILIO=1 DATA_DIR="$ROOT/var"
@@ -73,7 +73,7 @@ curl -sf "http://localhost:$API_PORT/clips/golden" >/dev/null || fail "the API d
 curl -sf "http://localhost:$WEB_PORT/" >/dev/null || fail "the web app did not start; see $DATA_DIR/web.log"
 
 printf '\n\033[32mCallGuard is running.\033[0m\n'
-printf '  Demo:          %s\n' "$DEMO_URL"
+printf '  App:           %s\n' "$DEMO_URL"
 printf '  Analyst view:  http://localhost:%s/console\n' "$WEB_PORT"
 printf '  API:           http://localhost:%s/docs\n' "$API_PORT"
 printf 'Press Ctrl+C to stop.\n'
