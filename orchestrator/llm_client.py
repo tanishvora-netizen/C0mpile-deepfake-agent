@@ -8,6 +8,7 @@ from typing import Any, Protocol
 
 from contracts.models import ToolRecord
 from orchestrator import evidence as ev
+from tools_manager import manager
 
 
 @dataclass
@@ -83,12 +84,17 @@ class MockLLM:
             i = t["idx"]
             if per_turn.get(i, {}).get("too_short"):
                 continue
-            if abs(pa[i] - pb[i]) > ev.DISAGREE:  # prompt rule: A and B disagree -> rescore_region
+            if ev.split_points(cps, t["start"], t["end"]):  # prompt rule: p_fake moved inside a turn -> score_windows first
+                dets = ["B"]
+                if manager.backend() == "local":  # live: every detector, so each stretch needs all of them to agree
+                    dets = sorted({r.values["detector"] for r in records if r.tool == "score_turns" and r.status == "ok"})
+                for det in dets:
+                    w, hop = (4, 2) if manager.backend() == "local" else (2, 1)
+                    args = {"clip_id": cid, "detector": det, "start": t["start"], "end": t["end"], "window_s": w, "hop_s": hop}
+                    calls.append(ToolUse(id=f"toolu_mock_{n + len(calls)}", name="score_windows", input=args))
+            elif abs(pa[i] - pb[i]) > ev.DISAGREE:  # prompt rule: A and B disagree -> rescore_region
                 args = {"clip_id": cid, "detector": "A", "start": t["start"], "end": t["end"], "context_s": 30}
                 calls.append(ToolUse(id=f"toolu_mock_{n + len(calls)}", name="rescore_region", input=args))
-            elif ev.split_points(cps, t["start"], t["end"]):  # prompt rule: p_fake moved inside a turn -> score_windows
-                args = {"clip_id": cid, "detector": "B", "start": t["start"], "end": t["end"], "window_s": 2, "hop_s": 1}
-                calls.append(ToolUse(id=f"toolu_mock_{n + len(calls)}", name="score_windows", input=args))
         return calls
 
 

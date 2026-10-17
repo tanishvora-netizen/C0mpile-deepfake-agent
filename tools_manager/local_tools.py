@@ -15,6 +15,8 @@ from contracts.models import ToolRecord
 from workers import context, detectors
 
 VALIDITY = {"min_duration_s": 1.0, "sample_rate": 16000}
+WIN_S, HOP_S = 4.0, 2.0  # windows used to find AI stretches inside one voice
+MIN_SPLIT_TURN_S = 6.0
 SPEAKER_DELTA = 1.0
 P_FAKE_JUMP = 0.3
 
@@ -85,8 +87,31 @@ def rescore_region(clip_id: str, params: dict) -> dict:
             "p_fake": _score(clip_id, params["detector"], s, e)}
 
 
+def _windows(start: float, end: float) -> list[tuple[float, float]]:
+    out, t = [], start
+    while t + WIN_S < end - 1e-6:
+        out.append((round(t, 2), round(t + WIN_S, 2)))
+        t += HOP_S
+    out.append((round(max(start, end - WIN_S), 2), round(end, 2)))
+    return out
+
+
+def _inside_flips(clip_id: str, turn: dict) -> list[dict]:
+    """Where the all-detector verdict flips between overlapping windows inside one voice."""
+    if turn["end"] - turn["start"] < MIN_SPLIT_TURN_S:
+        return []
+    wins = _windows(turn["start"], turn["end"])
+    flags = [min(_score(clip_id, d, a, b) for d in detectors.MODELS) >= 0.5 for a, b in wins]
+    cps = []
+    for (w0, f0), (w1, f1) in itertools.pairwise(zip(wins, flags, strict=True)):
+        if f0 != f1:
+            t = round(((w0[0] + w0[1]) / 2 + (w1[0] + w1[1]) / 2) / 2, 2)
+            cps.append({"t": t, "moved": "p_fake", "delta": 1.0})
+    return cps
+
+
 def find_boundaries(clip_id: str, params: dict) -> dict:
-    """Change points at the joins between turns: a new voice, and whether the AI score moved with it."""
+    """Change points between voices (a new voice, did the AI score move) and inside a voice (an AI stretch)."""
     s, e = float(params["start"]), float(params["end"])
     ts = [t for t in _turns(clip_id) if t["end"] > s and t["start"] < e]
     cps = []
@@ -97,6 +122,9 @@ def find_boundaries(clip_id: str, params: dict) -> dict:
         both = [min(_score(clip_id, d, x["start"], x["end"]) for d in detectors.MODELS) for x in (left, right)]
         if abs(both[0] - both[1]) > P_FAKE_JUMP:
             cps.append({"t": t, "moved": "p_fake", "delta": round(abs(both[0] - both[1]), 3)})
+    for turn in ts:
+        cps.extend(_inside_flips(clip_id, turn))
+    cps.sort(key=lambda c: c["t"])
     return {"start": s, "end": e, "signals": params.get("signals", []), "change_points": cps}
 
 

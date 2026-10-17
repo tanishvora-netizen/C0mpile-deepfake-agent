@@ -112,14 +112,18 @@ def aggregate(records: list[ToolRecord], fixed: bool) -> dict:
         cuts = split_points(cps, s, e)
         if cuts and wins and not short:
             edges = [s, *cuts, e]
+            det_wins = {d: w for d in ("A", "B", "C") if (w := windows(records, d))}
             for lo_e, hi_e in itertools.pairwise(edges):
-                m, rep = window_mean(wins, lo_e, hi_e), rep_window(wins, lo_e, hi_e)
-                if m is None or rep is None:
+                means = {d: m for d, w in det_wins.items() if (m := window_mean(w, lo_e, hi_e)) is not None}
+                if not means:
                     segs.append(Segment(start=lo_e, end=hi_e, speaker=t["speaker"], label="uncertain", tool_score=None, evidence=ev_ab))
                     continue
+                low = min(means, key=means.get)  # a stretch is AI only when every detector agrees
+                rep = rep_window(det_wins[low], lo_e, hi_e)
                 segs.append(Segment(
-                    start=lo_e, end=hi_e, speaker=t["speaker"], label=label_of(m, lo, hi), tool_score=rep,  # type: ignore[arg-type]
-                    evidence=[Evidence(tool="score_windows", field="windows.p_fake (B, range mean)", value=round(m, 3)),
+                    start=lo_e, end=hi_e, speaker=t["speaker"], label=label_of(means[low], lo, hi), tool_score=rep,  # type: ignore[arg-type]
+                    evidence=[*[Evidence(tool="score_windows", field=f"windows.p_fake range mean ({d})", value=round(m, 3))
+                                for d, m in sorted(means.items())],
                               Evidence(tool="find_boundaries", field="change_points.moved", value="p_fake")],
                 ))
             notes.append(f"find_boundaries moved p_fake at {', '.join(f'{c:.1f}' for c in cuts)} s inside turn {i}, so it was split")
