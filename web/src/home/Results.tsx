@@ -4,34 +4,35 @@ import type { AnalysisResult, CallSource, Label, TranscriptLine } from '../types
 import { Icon } from './Icons'
 import { Spinner } from './bits'
 import {
-  closerLook, detectorScores, detectorsDisagree, linesFor, mmss, overallVerdict, pct, sourceFor, VERDICT,
-  voiceNames, type Tone,
+  aiAtText, groupVoices, linesForVoice, mmss, overallVerdict, pct, VERDICT, type Detectors, type Tone, type Voice, type VoiceKind,
 } from './lib'
 
 const BAR: Record<Label, string> = {
-  synthetic: 'bg-red-500 text-white',
-  bona_fide: 'bg-green-600 text-white',
-  uncertain: 'bg-amber-400 text-amber-950',
+  synthetic: 'bg-ai text-bg',
+  bona_fide: 'bg-human text-bg',
+  uncertain: 'bg-unsure text-bg',
 }
 const HEAD: Record<Tone, string> = {
-  danger: 'text-red-700',
-  ok: 'text-green-700',
-  warn: 'text-amber-700',
-  neutral: 'text-slate-900',
+  danger: 'text-ai',
+  ok: 'text-human',
+  warn: 'text-part',
+  neutral: 'text-unsure',
 }
-const CARD: Record<Label, string> = {
-  synthetic: 'border-red-200 bg-red-50/60',
-  bona_fide: 'border-green-200 bg-green-50/60',
-  uncertain: 'border-amber-200 bg-amber-50/60',
+const CARD: Record<VoiceKind, string> = {
+  ai: 'border-ai/40 bg-ai/10',
+  human: 'border-human/40 bg-human/10',
+  part: 'border-part/50 bg-part/10',
+  unsure: 'border-line bg-card2',
 }
 
-function Player({ clipId, result, durationS }: { clipId: string; result: AnalysisResult; durationS: number }) {
+function Player({ clipId, result, durationS, voices }: { clipId: string; result: AnalysisResult; durationS: number; voices: Voice[] }) {
   const url = clipAudioUrl(clipId)
   const audio = useRef<HTMLAudioElement>(null)
   const [t, setT] = useState(0)
   const [len, setLen] = useState(0)
   const [playing, setPlaying] = useState(false)
-  const names = voiceNames(result.segments)
+  const nameAt: string[] = []
+  voices.forEach((v) => v.idx.forEach((i) => { nameAt[i] = v.name }))
   const lastEnd = result.segments.reduce((m, s) => Math.max(m, s.end), 0)
   const total = Math.max(len, durationS, lastEnd, 0.1)
 
@@ -58,100 +59,94 @@ function Player({ clipId, result, durationS }: { clipId: string; result: Analysi
     <div>
       {url && (
         <audio
-          ref={audio} src={url} controls preload="metadata" className="w-full"
+          ref={audio} src={url} controls preload="metadata" className="w-full [color-scheme:dark]"
           onLoadedMetadata={(e) => Number.isFinite(e.currentTarget.duration) && setLen(e.currentTarget.duration)}
           onTimeUpdate={(e) => setT(e.currentTarget.currentTime)}
           onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onEnded={() => setPlaying(false)}
         />
       )}
       <div
-        className="relative mt-3 h-14 cursor-pointer overflow-hidden rounded-xl bg-slate-200"
+        className="relative mt-3 h-14 cursor-pointer overflow-hidden rounded-2xl bg-card2"
         onClick={(e) => url && seek(e.clientX, e.currentTarget)}
         role="img"
-        aria-label={result.segments.map((s, i) => `${names[i]}, ${mmss(s.start)} to ${mmss(s.end)}: ${VERDICT[s.label].headline}`).join('. ')}
+        aria-label={result.segments.map((s, i) => `${nameAt[i]}, ${mmss(s.start)} to ${mmss(s.end)}: ${VERDICT[s.label].headline}`).join('. ')}
       >
         {result.segments.map((s, i) => (
           <div
             key={i}
-            className={`absolute inset-y-0 flex items-center justify-center overflow-hidden border-r-2 border-white px-2 text-[17px] font-semibold last:border-r-0 ${BAR[s.label]}`}
+            title={`${nameAt[i]} · ${mmss(s.start)}–${mmss(s.end)} · ${VERDICT[s.label].headline}`}
+            className={`absolute inset-y-0 flex items-center justify-center overflow-hidden border-r-2 border-bg px-2 text-[17px] font-bold last:border-r-0 ${BAR[s.label]}`}
             style={{ left: `${(s.start / total) * 100}%`, width: `${((s.end - s.start) / total) * 100}%` }}
           >
-            <span className="truncate">{names[i]}</span>
+            <span className="truncate">{nameAt[i]}</span>
           </div>
         ))}
-        {url && <div className="absolute inset-y-0 w-0.5 bg-slate-900 shadow-[0_0_0_1px_rgba(255,255,255,0.8)]" style={{ left: `${Math.min(100, (t / total) * 100)}%` }} />}
+        {url && <div className="absolute inset-y-0 w-0.5 bg-white shadow-[0_0_0_1px_rgba(0,0,0,0.7),0_0_10px_rgba(255,255,255,0.8)]" style={{ left: `${Math.min(100, (t / total) * 100)}%` }} />}
       </div>
-      <div className="mt-1.5 flex justify-between text-[17px] text-slate-500 tabular-nums">
+      <div className="mt-1.5 flex justify-between text-[17px] text-mute tabular-nums">
         <span>{mmss(url ? t : 0)}</span>
         <span>{mmss(total)}</span>
       </div>
-      <ul className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-[17px] text-slate-600" aria-label="Colour key">
-        <li className="flex items-center gap-2"><span className="h-3.5 w-3.5 rounded-sm bg-red-500" />AI-generated</li>
-        <li className="flex items-center gap-2"><span className="h-3.5 w-3.5 rounded-sm bg-green-600" />Real person</li>
-        <li className="flex items-center gap-2"><span className="h-3.5 w-3.5 rounded-sm bg-amber-400" />Not sure</li>
+      <ul className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-[17px] text-mute" aria-label="Colour key">
+        <li className="flex items-center gap-2"><span className="h-3.5 w-3.5 rounded-sm bg-ai" />AI-generated</li>
+        <li className="flex items-center gap-2"><span className="h-3.5 w-3.5 rounded-sm bg-human" />Real person</li>
+        <li className="flex items-center gap-2"><span className="h-3.5 w-3.5 rounded-sm bg-unsure" />Couldn't tell</li>
       </ul>
     </div>
   )
 }
 
+function DetectorLine({ d, fallback }: { d: Detectors | null; fallback: number | null }) {
+  const parts = d ? (['A', 'B', 'C'] as const).filter((k) => d[k] !== null).map((k) => `${k} ${pct(d[k] as number)}`) : []
+  if (parts.length) {
+    return <p className="mt-2 text-[18px] leading-snug text-ink tabular-nums">Detectors: {parts.join(' · ')} AI</p>
+  }
+  if (fallback !== null) return <p className="mt-2 text-[18px] leading-snug text-ink">{pct(fallback)} likely AI</p>
+  return null
+}
+
 function VoiceCard({
-  name, seg, source, lines, transcribing,
+  voice, lines, transcribing,
 }: {
-  name: string
-  seg: AnalysisResult['segments'][number]
-  source: CallSource | null
+  voice: Voice
   lines: TranscriptLine[]
   transcribing: boolean
 }) {
-  const v = VERDICT[seg.label]
-  const d = detectorScores(seg)
-  const hasBoth = d.A !== null && d.B !== null
-  const disagree = detectorsDisagree(d)
-  const look = closerLook(seg)
-  const score = (x: number | null) => (x === null ? 'n/a' : `${pct(x)} AI`)
+  const src: CallSource | null = voice.source
+  const scores = voice.segments.map((s) => s.tool_score).filter((x): x is number => x !== null)
+  const fallback = scores.length ? Math.max(...scores) : null
   return (
-    <article className={`rounded-2xl border p-5 sm:p-6 ${CARD[seg.label]}`}>
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[17px] text-slate-600">
-        <span className="font-semibold text-slate-900">{name}</span>
+    <article className={`rounded-3xl border p-5 sm:p-6 ${CARD[voice.kind]}`}>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[17px] text-mute">
+        <span className="font-bold text-ink">{voice.name}</span>
         <span aria-hidden="true">·</span>
-        <span className="tabular-nums">{mmss(seg.start)}–{mmss(seg.end)}</span>
-        {source && (
+        <span className="tabular-nums">{mmss(voice.start)}–{mmss(voice.end)}</span>
+        {src && (
           <>
             <span aria-hidden="true">·</span>
             <span className="inline-flex min-w-0 items-center gap-1.5">
               <Icon name="file" className="h-4 w-4 shrink-0" />
-              <span className="truncate">{source.name}</span>
+              <span className="truncate">{src.name}</span>
             </span>
           </>
         )}
       </div>
-      <h3 className={`mt-2 text-[32px] font-extrabold leading-tight tracking-tight ${HEAD[v.tone]}`}>{v.headline}</h3>
-      <p className="mt-2 text-[18px] leading-snug text-slate-800">
-        {hasBoth || d.A !== null || d.B !== null
-          ? `Detector A: ${score(d.A)} · Detector B: ${score(d.B)}`
-          : seg.tool_score !== null
-            ? `${pct(seg.tool_score)} likely AI`
-            : 'No detector score available.'}
-      </p>
-      {disagree && seg.label !== 'synthetic' && (
-        <p className="mt-1.5 text-[18px] leading-snug text-slate-800">The detectors disagreed, so CallGuard did not flag this voice.</p>
+      <h3 className={`mt-2 text-[34px] font-black leading-[1.05] tracking-tight ${HEAD[voice.tone]}`}>{voice.headline}</h3>
+      {voice.kind === 'part' && voice.aiRanges.length > 0 && (
+        <p className="mt-2 text-[20px] font-bold leading-snug text-ink tabular-nums">{aiAtText(voice.aiRanges)}</p>
       )}
-      {disagree && seg.label === 'synthetic' && look !== null && (
-        <p className="mt-1.5 text-[18px] leading-snug text-slate-800">
-          The detectors first disagreed. A closer look at this part found it {pct(look)} likely AI.
-        </p>
-      )}
+      <DetectorLine d={voice.detectors} fallback={fallback} />
       {lines.length > 0 ? (
-        <div className="mt-4 border-t border-black/10 pt-4">
-          <div className="text-[17px] font-semibold text-slate-500">What this voice said</div>
+        <div className="mt-4 border-t border-white/10 pt-4">
+          <div className="text-[17px] font-semibold text-mute">What this voice said</div>
           <ul className="mt-1.5 space-y-1.5">
             {lines.map((l, i) => (
-              <li key={i} className="text-[18px] leading-snug text-slate-900">“{l.text}”</li>
+              <li key={i} className="text-[18px] leading-snug text-ink">“{l.text}”</li>
             ))}
           </ul>
         </div>
       ) : transcribing ? (
-        <p className="mt-4 flex items-center gap-2 border-t border-black/10 pt-4 text-[17px] text-slate-500">
+        <p className="mt-4 flex items-center gap-2 border-t border-white/10 pt-4 text-[17px] text-mute">
           <Spinner className="h-4 w-4" /> Writing down what was said…
         </p>
       ) : null}
@@ -170,33 +165,34 @@ export default function Results({
   transcribing: boolean
   onReset: () => void
 }) {
-  const verdict = overallVerdict(result.segments)
-  const names = voiceNames(result.segments)
+  const voices = groupVoices(result.segments, sources)
+  const verdict = overallVerdict(result.segments, voices)
   return (
-    <section className="rise rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8" aria-labelledby="result-title">
+    <section className="rise rounded-3xl border border-line bg-card p-5 shadow-[0_0_80px_rgba(209,254,23,0.04)] sm:p-8" aria-labelledby="result-title">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <h2 id="result-title" className="text-[28px] font-bold leading-tight tracking-tight text-slate-900">Result</h2>
+        <h2 id="result-title" className="text-[17px] font-bold uppercase tracking-[0.12em] text-accent">Result</h2>
         <button
           type="button" onClick={onReset}
-          className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-[17px] font-semibold text-slate-800 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-accent"
+          className="rounded-full border border-line bg-card2 px-5 py-2.5 text-[17px] font-semibold text-ink hover:border-accent hover:text-accent focus-visible:outline-2 focus-visible:outline-accent"
         >
           Check another call
         </button>
       </div>
-      <p className={`mt-3 text-[32px] font-extrabold leading-tight tracking-tight sm:text-[36px] ${HEAD[verdict.tone]}`}>{verdict.text}</p>
-      {verdict.sub && <p className="mt-1 text-[18px] text-slate-600">{verdict.sub}</p>}
+      <p className={`mt-3 text-[40px] font-black leading-[1.02] tracking-tight sm:text-[52px] ${HEAD[verdict.tone]}`}>{verdict.text}</p>
+      {verdict.sub && <p className="mt-3 text-[22px] font-semibold leading-snug text-ink">{verdict.sub}</p>}
+      <p className="mt-2 text-[17px] leading-snug text-mute">A voice is marked AI only when all three detectors agree.</p>
 
       {result.segments.length > 0 && (
         <div className="mt-6">
-          <Player clipId={clipId} result={result} durationS={durationS} />
+          <Player clipId={clipId} result={result} durationS={durationS} voices={voices} />
         </div>
       )}
 
       <div className="mt-6 space-y-4">
-        {result.segments.map((seg, i) => (
+        {voices.map((v, i) => (
           <VoiceCard
-            key={i} name={names[i]} seg={seg} source={sourceFor(seg, sources)}
-            lines={linesFor(i, result.segments, lines)} transcribing={transcribing && lines === null}
+            key={v.name} voice={v}
+            lines={linesForVoice(i, voices, lines)} transcribing={transcribing && lines === null}
           />
         ))}
       </div>

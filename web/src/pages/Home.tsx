@@ -23,8 +23,8 @@ function StatusChip({ state }: { state: HealthState }) {
   }
   if (!text) return null
   return (
-    <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-[17px] text-slate-700">
-      <span className={`h-2.5 w-2.5 rounded-full ${live ? 'bg-accent' : 'border-2 border-slate-400'}`} aria-hidden="true" />
+    <span className="inline-flex items-center gap-2 rounded-full border border-line bg-card px-4 py-2 text-[17px] text-ink">
+      <span className={`h-2.5 w-2.5 rounded-full ${live ? 'bg-accent shadow-[0_0_10px_#d1fe17]' : 'border-2 border-mute'}`} aria-hidden="true" />
       {text}
     </span>
   )
@@ -43,16 +43,16 @@ function Progress({ stage, events, finished, error, onRetry }: {
     ...lines,
   ]
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8" aria-labelledby="run-title" aria-live="polite">
-      <h2 id="run-title" className="text-[28px] font-bold leading-tight tracking-tight text-slate-900">
+    <section className="rounded-3xl border border-line bg-card p-5 shadow-[0_0_80px_rgba(209,254,23,0.04)] sm:p-8" aria-labelledby="run-title" aria-live="polite">
+      <h2 id="run-title" className="text-[30px] font-extrabold leading-tight tracking-tight text-ink">
         {error ? "We couldn't check this call" : 'Checking your call'}
       </h2>
       {error ? (
         <>
-          <p className="mt-3 rounded-xl bg-slate-100 px-4 py-3 text-[18px] text-slate-800" role="alert">{error}</p>
+          <p className="mt-3 rounded-2xl border border-line bg-card2 px-4 py-3 text-[18px] text-ink" role="alert">{error}</p>
           <button
             type="button" onClick={onRetry}
-            className="mt-5 rounded-xl bg-accent px-6 py-3.5 text-lg font-semibold text-white hover:bg-indigo-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            className="mt-5 rounded-full bg-accent px-8 py-3.5 text-lg font-bold text-accent-ink hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
           >
             Go back and try again
           </button>
@@ -62,11 +62,11 @@ function Progress({ stage, events, finished, error, onRetry }: {
           {all.map((l, i) => {
             const active = i === all.length - 1 && !finished
             return (
-              <li key={l.id} className="rise flex items-start gap-3 text-[18px] leading-snug text-slate-900">
-                <span className={`mt-0.5 grid h-6 w-6 shrink-0 place-items-center ${active ? 'text-accent' : l.tone === 'warn' ? 'text-amber-600' : 'text-slate-400'}`}>
+              <li key={l.id} className="rise flex items-start gap-3 text-[18px] leading-snug text-ink">
+                <span className={`mt-0.5 grid h-6 w-6 shrink-0 place-items-center ${active ? 'text-accent' : l.tone === 'warn' ? 'text-part' : 'text-mute'}`}>
                   {active ? <Spinner className="h-5 w-5" /> : <Icon name={l.tone === 'warn' ? 'alert' : 'check'} className="h-5 w-5" />}
                 </span>
-                <span className={active ? 'font-semibold' : l.tone === 'warn' ? 'text-amber-900' : 'text-slate-700'}>{l.text}</span>
+                <span className={active ? 'font-bold' : l.tone === 'warn' ? 'text-part' : 'text-mute'}>{l.text}</span>
               </li>
             )
           })}
@@ -182,16 +182,16 @@ export default function Home() {
   const aiFound = !!result && result.segments.some((s) => s.label === 'synthetic')
 
   return (
-    <div className="min-h-screen bg-slate-50 text-[17px] text-slate-900">
+    <div className="min-h-screen text-[17px] text-ink">
       <div className="mx-auto w-full max-w-[1100px] px-4 pb-10 sm:px-6">
         <header className="mx-auto flex w-full max-w-3xl flex-wrap items-center justify-between gap-x-6 gap-y-3 pb-6 pt-8 sm:pt-10">
           <div className="flex items-center gap-3.5">
-            <span className="grid h-11 w-11 place-items-center rounded-xl bg-accent text-white">
+            <span className="grid h-11 w-11 place-items-center rounded-full bg-accent text-accent-ink">
               <Icon name="shieldCheck" className="h-6 w-6" />
             </span>
             <div>
-              <h1 className="text-[28px] font-extrabold leading-none tracking-tight">CallGuard</h1>
-              <p className="mt-1.5 text-[17px] text-slate-600">Check a phone call for AI-cloned voices.</p>
+              <h1 className="text-[28px] font-black leading-none tracking-tight">CallGuard</h1>
+              <p className="mt-1.5 text-[17px] text-mute">Check a phone call for AI-cloned voices.</p>
             </div>
           </div>
           <StatusChip state={health} />
@@ -199,6 +199,11 @@ export default function Home() {
 
         <main className="space-y-6">
           <div className="mx-auto w-full max-w-3xl space-y-6">
+            {!running && !result && (
+              <p className="pb-2 text-[44px] font-black leading-[1.02] tracking-tight sm:text-[60px]">
+                Is that voice <span className="text-accent">real?</span>
+              </p>
+            )}
             {!running && (
               <AddCall items={items} setItems={setItems} onSubmit={() => void submit()} />
             )}
@@ -218,7 +223,7 @@ export default function Home() {
             <div className="mx-auto max-w-3xl">
               <button
                 type="button" onClick={reset}
-                className="rounded-xl border border-slate-300 bg-white px-5 py-3 text-[17px] font-semibold text-slate-800 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-accent"
+                className="rounded-full border border-line bg-card2 px-6 py-3 text-[17px] font-semibold text-ink hover:border-accent hover:text-accent focus-visible:outline-2 focus-visible:outline-accent"
               >
                 Check another call
               </button>
@@ -226,8 +231,8 @@ export default function Home() {
           )}
         </main>
 
-        <footer className="mx-auto mt-12 max-w-3xl border-t border-slate-200 pt-4 text-[17px] text-slate-500">
-          <Link to={{ pathname: '/console', search }} className="underline decoration-slate-300 underline-offset-4 hover:text-slate-900">
+        <footer className="mx-auto mt-12 max-w-3xl border-t border-line pt-4 text-[17px] text-mute">
+          <Link to={{ pathname: '/console', search }} className="underline decoration-line underline-offset-4 hover:text-accent">
             Analyst view
           </Link>
         </footer>

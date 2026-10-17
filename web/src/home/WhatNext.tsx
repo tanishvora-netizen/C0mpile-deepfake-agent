@@ -81,9 +81,9 @@ export default function WhatNext({ jobId }: { jobId: string }) {
   }, [tId, tState])
 
   return (
-    <section className="rise rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8" aria-labelledby="next-title">
-      <h2 id="next-title" className="text-[28px] font-bold leading-tight tracking-tight text-slate-900">What happens next</h2>
-      <p className="mt-2 max-w-2xl text-[17px] leading-relaxed text-slate-600">
+    <section className="rise rounded-3xl border border-line bg-card p-5 shadow-[0_0_80px_rgba(209,254,23,0.04)] sm:p-8" aria-labelledby="next-title">
+      <h2 id="next-title" className="text-[30px] font-extrabold leading-tight tracking-tight text-ink">What happens next</h2>
+      <p className="mt-2 max-w-2xl text-[18px] leading-relaxed text-mute">
         An AI voice was found on this call. If the call was to Grandma, CallGuard can step in before any money leaves her account.
       </p>
 
@@ -91,18 +91,18 @@ export default function WhatNext({ jobId }: { jobId: string }) {
         <div className="mt-6">
           <button
             type="button" onClick={() => void protect()} disabled={opening}
-            className="inline-flex items-center gap-3 rounded-xl bg-accent px-6 py-3.5 text-xl font-semibold text-white shadow-sm transition hover:bg-indigo-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-60"
+            className="inline-flex items-center gap-3 rounded-full bg-accent px-8 py-4 text-xl font-bold text-accent-ink shadow-[0_0_32px_rgba(209,254,23,0.3)] transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-60"
           >
             {opening && <Spinner />} Protect Grandma's account
           </button>
         </div>
       )}
-      {err && <p className="mt-4 rounded-xl bg-slate-100 px-4 py-3 text-[17px] text-slate-800" role="alert">{err}</p>}
+      {err && <p className="mt-4 rounded-2xl border border-line bg-card2 px-4 py-3 text-[17px] text-ink" role="alert">{err}</p>}
 
       {caseView && (
         <div className="mt-6">
           {!hasVerify && (
-            <p className="mx-auto mb-6 max-w-[760px] rounded-xl bg-slate-100 px-4 py-3 text-[18px] leading-snug text-slate-800">
+            <p className="mx-auto mb-6 max-w-[760px] rounded-2xl border border-line bg-card2 px-4 py-3 text-[18px] leading-snug text-ink">
               The caller didn't claim to be a saved contact, so CallGuard holds new payees and alerts the trusted contact.
             </p>
           )}

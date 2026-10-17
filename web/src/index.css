@@ -1,19 +1,36 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
 @import "tailwindcss";
 
 @theme {
-  --color-accent: #4338ca;
-  --color-accent-soft: #eef2ff;
-  --color-critical: #dc2626;
-  --color-critical-soft: #fef2f2;
-  --color-warn: #d97706;
-  --color-warn-soft: #fffbeb;
-  --color-ok: #15803d;
-  --color-ok-soft: #f0fdf4;
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  /* One neon accent on near-black, in the spirit of higgsfield.ai */
+  --color-accent: #d1fe17;
+  --color-accent-ink: #0a0a0b;
+  --color-brand: #4338ca; /* used only inside the phone mock-ups */
+  --color-bg: #08080a;
+  --color-card: #121215;
+  --color-card2: #1b1b20;
+  --color-line: #2c2c34;
+  --color-ink: #f6f6f8;
+  --color-mute: #b4b4bf;
+  --color-ai: #ff5a72;
+  --color-human: #3ee08f;
+  --color-part: #ffb02e;
+  --color-unsure: #9d9daa;
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
 html, body, #root { min-height: 100%; }
-body { background: #f8fafc; color: #0f172a; margin: 0; }
+body {
+  margin: 0;
+  background-color: #08080a;
+  background-image: radial-gradient(70% 38% at 50% -8%, rgb(209 254 23 / 0.13), transparent 70%);
+  background-repeat: no-repeat;
+  color: #f6f6f8;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+::selection { background: #d1fe17; color: #0a0a0b; }
+select option { background: #1b1b20; color: #f6f6f8; }
 
 /* ---- demo page motion (CSS only) ---- */
 @keyframes rise {
@@ -21,8 +38,8 @@ body { background: #f8fafc; color: #0f172a; margin: 0; }
   to { opacity: 1; transform: none; }
 }
 @keyframes ring {
-  0% { box-shadow: 0 0 0 0 rgb(67 56 202 / 0.55); }
-  70%, 100% { box-shadow: 0 0 0 14px rgb(67 56 202 / 0); }
+  0% { box-shadow: 0 0 0 0 rgb(209 254 23 / 0.55); }
+  70%, 100% { box-shadow: 0 0 0 14px rgb(209 254 23 / 0); }
 }
 @keyframes ripple {
   0% { transform: scale(0.9); opacity: 0.7; }

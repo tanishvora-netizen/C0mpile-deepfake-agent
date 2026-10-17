@@ -43,15 +43,15 @@ export default function Phones({
         {hasVerify && (
         <Phone caption={`${contactName}'s real phone`} note="The saved number — not the caller's">
           <div className="flex items-center gap-3 border-b border-slate-100 bg-slate-50 px-4 pb-3 pt-8">
-            <span className="grid h-10 w-10 place-items-center rounded-full bg-accent text-white"><Icon name="bank" className="h-5 w-5" /></span>
+            <span className="grid h-10 w-10 place-items-center rounded-full bg-brand text-white"><Icon name="bank" className="h-5 w-5" /></span>
             <div>
               <div className="text-lg font-bold leading-tight">Bay Credit Union</div>
-              <div className="text-sm text-slate-500">Text message · now</div>
+              <div className="text-sm text-slate-600">Text message · now</div>
             </div>
           </div>
           <div className="flex flex-1 flex-col gap-3 p-4">
             {ready && !smsSent ? (
-              <div className="grid flex-1 place-items-center text-center text-lg text-slate-400">
+              <div className="grid flex-1 place-items-center text-center text-lg text-slate-500">
                 No text needed.
               </div>
             ) : ready ? (
@@ -62,7 +62,7 @@ export default function Phones({
               <div className="rounded-3xl rounded-bl-md bg-slate-100 px-4 py-3"><TypingDots /></div>
             )}
             {reply && (
-              <div className="rise ml-auto rounded-3xl rounded-br-md bg-accent px-6 py-3 text-2xl font-bold text-white">{reply}</div>
+              <div className="rise ml-auto rounded-3xl rounded-br-md bg-brand px-6 py-3 text-2xl font-bold text-white">{reply}</div>
             )}
             {reply && (
               <div
@@ -97,7 +97,7 @@ export default function Phones({
 
         {/* (b) Grandma's banking app */}
         <Phone caption="Grandma's banking app" note="Her account at the credit union">
-          <div className="bg-accent px-5 pb-4 pt-8 text-white">
+          <div className="bg-brand px-5 pb-4 pt-8 text-white">
             <div className="text-sm font-semibold uppercase tracking-wider text-indigo-200">Checking ••4821</div>
             <div className="text-[34px] font-extrabold tabular-nums leading-tight">{usd(balance)}</div>
           </div>
@@ -105,20 +105,20 @@ export default function Phones({
             {!transfer ? (
               <>
                 <div className="rounded-2xl border border-slate-200 p-4">
-                  <div className="text-sm font-semibold uppercase tracking-wider text-slate-400">Send money</div>
+                  <div className="text-sm font-semibold uppercase tracking-wider text-slate-500">Send money</div>
                   <div className="mt-1 text-[22px] font-bold">{usd(AMOUNT)}</div>
-                  <div className="text-base text-slate-500">To: {PAYEE}</div>
+                  <div className="text-[17px] text-slate-600">To: {PAYEE}</div>
                 </div>
                 <button
                   type="button" disabled={!ready || busy} onClick={onSend}
-                  className={`mt-auto rounded-2xl bg-accent px-4 py-4 text-xl font-bold leading-snug text-white transition hover:bg-indigo-800 disabled:opacity-40 ${nextAction === 'send' ? pulse : ''}`}
+                  className={`mt-auto rounded-2xl bg-brand px-4 py-4 text-xl font-bold leading-snug text-white transition hover:bg-indigo-800 disabled:opacity-40 ${nextAction === 'send' ? pulse : ''}`}
                 >
                   Send {usd(AMOUNT)}
                 </button>
               </>
             ) : (
               <>
-                <div className="text-base text-slate-500">{usd(transfer.amount)} → {transfer.payee}</div>
+                <div className="text-[17px] text-slate-600">{usd(transfer.amount)} → {transfer.payee}</div>
                 {transfer.state === 'PENDING' && (
                   <div className="rise flex-1 rounded-2xl border-2 border-slate-300 bg-slate-50 p-4 text-slate-800">
                     <Icon name="check" className="h-10 w-10 text-green-600" />
@@ -160,17 +160,17 @@ export default function Phones({
             <span className="grid h-10 w-10 place-items-center rounded-full bg-slate-900 text-white"><Icon name="shield" className="h-5 w-5" /></span>
             <div>
               <div className="text-lg font-bold leading-tight">CallGuard</div>
-              <div className="text-sm text-slate-500">{showMaria ? 'Approval needed · now' : 'No alerts'}</div>
+              <div className="text-sm text-slate-600">{showMaria ? 'Approval needed · now' : 'No alerts'}</div>
             </div>
           </div>
           {showMaria && transfer ? (
             <div key="maria" className="rise flex flex-1 flex-col gap-3 p-4">
               <div>
-                <div className="text-base text-slate-500">Grandma wants to send</div>
+                <div className="text-[17px] text-slate-600">Grandma wants to send</div>
                 <div className="text-[40px] font-extrabold tabular-nums leading-tight">{usd(transfer.amount)}</div>
                 <div className="text-lg text-slate-700">to {transfer.payee}</div>
               </div>
-              <div className="rounded-2xl bg-amber-50 px-4 py-3 text-base leading-snug text-amber-950">
+              <div className="rounded-2xl bg-amber-50 px-4 py-3 text-[17px] leading-snug text-amber-950">
                 <b>Why it is held:</b> {hasVerify ? `we could not confirm the caller was ${contactName}.` : 'a voice on the call sounded AI-generated.'}
               </div>
               {held ? (
@@ -195,7 +195,7 @@ export default function Phones({
               )}
             </div>
           ) : (
-            <div className="grid flex-1 place-items-center p-6 text-center text-lg text-slate-400">
+            <div className="grid flex-1 place-items-center p-6 text-center text-lg text-slate-500">
               Waiting for a held transfer…
             </div>
           )}

@@ -61,9 +61,9 @@ function pickMime(): string | undefined {
 }
 
 const btnSecondary =
-  'inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-[17px] font-semibold text-slate-800 transition hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent'
+  'inline-flex items-center justify-center gap-2 rounded-full border border-line bg-card2 px-6 py-3 text-[17px] font-semibold text-ink transition hover:border-accent hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent'
 const iconBtn =
-  'grid h-10 w-10 shrink-0 place-items-center rounded-lg text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 disabled:opacity-30 disabled:hover:bg-transparent focus-visible:outline-2 focus-visible:outline-accent'
+  'grid h-10 w-10 shrink-0 place-items-center rounded-full text-mute transition hover:bg-card2 hover:text-accent disabled:opacity-30 disabled:hover:bg-transparent focus-visible:outline-2 focus-visible:outline-accent'
 
 export default function AddCall({
   items, setItems, onSubmit,
@@ -229,9 +229,9 @@ export default function AddCall({
   const exampleId = items.find((i) => i.clipId)?.clipId ?? ''
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8" aria-labelledby="add-title">
-      <h2 id="add-title" className="text-[28px] font-bold leading-tight tracking-tight text-slate-900">Add the call</h2>
-      <p className="mt-2 text-[17px] leading-relaxed text-slate-600">
+    <section className="rounded-3xl border border-line bg-card p-5 shadow-[0_0_80px_rgba(209,254,23,0.04)] sm:p-8" aria-labelledby="add-title">
+      <h2 id="add-title" className="text-[30px] font-extrabold leading-tight tracking-tight text-ink">Add the call</h2>
+      <p className="mt-2 text-[18px] leading-relaxed text-mute">
         Add the AI clip and a recording of yourself. CallGuard joins them into one call and checks every voice separately.
       </p>
 
@@ -239,15 +239,15 @@ export default function AddCall({
         onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
         onDragLeave={() => setDragging(false)}
         onDrop={onDrop}
-        className={`mt-6 rounded-xl border-2 border-dashed px-4 py-8 text-center transition-colors sm:px-8 ${
-          dragging ? 'border-accent bg-accent-soft' : 'border-slate-300 bg-slate-50'
+        className={`mt-6 rounded-3xl border-2 border-dashed px-4 py-8 text-center transition-colors sm:px-8 ${
+          dragging ? 'border-accent bg-accent/10' : 'border-line bg-bg/60'
         }`}
       >
-        <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-white text-accent shadow-sm ring-1 ring-slate-200">
+        <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-accent text-accent-ink">
           <Icon name="upload" className="h-6 w-6" />
         </span>
-        <p className="mt-3 text-lg font-semibold text-slate-900">Drag audio files here</p>
-        <p className="text-[17px] text-slate-500">WAV, MP3, M4A, WebM and more</p>
+        <p className="mt-3 text-xl font-bold text-ink">Drag audio files here</p>
+        <p className="text-[17px] text-mute">WAV, MP3, M4A, WebM and more</p>
         <div className="mt-5 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
           <button type="button" onClick={() => fileInput.current?.click()} className={btnSecondary}>
             <Icon name="file" className="h-5 w-5" /> Choose files
@@ -255,9 +255,9 @@ export default function AddCall({
           {recording ? (
             <button
               type="button" onClick={stopRecording}
-              className="inline-flex items-center justify-center gap-3 rounded-xl bg-slate-900 px-4 py-2.5 text-[17px] font-semibold text-white transition hover:bg-slate-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+              className="inline-flex items-center justify-center gap-3 rounded-full bg-ai px-6 py-3 text-[17px] font-bold text-bg transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
             >
-              <span className="pulse-ring h-3 w-3 rounded-full bg-accent" aria-hidden="true" />
+              <span className="pulse-ring h-3 w-3 rounded-full bg-bg" aria-hidden="true" />
               <span className="tabular-nums" aria-live="off">{mmss(secs)}</span>
               <span className="inline-flex items-center gap-1.5"><Icon name="stop" className="h-4 w-4" fill /> Stop</span>
             </button>
@@ -276,18 +276,18 @@ export default function AddCall({
         />
       </div>
 
-      {recording && <p className="mt-3 text-[17px] text-slate-600" role="status">Recording… speak naturally for a few seconds, then press Stop.</p>}
-      {recError && <p className="mt-3 rounded-xl bg-slate-100 px-4 py-3 text-[17px] text-slate-800" role="alert">{recError}</p>}
-      {notice && <p className="mt-3 rounded-xl bg-slate-100 px-4 py-3 text-[17px] text-slate-800" role="alert">{notice}</p>}
+      {recording && <p className="mt-3 text-[17px] text-mute" role="status">Recording… speak naturally for a few seconds, then press Stop.</p>}
+      {recError && <p className="mt-3 rounded-2xl border border-line bg-card2 px-4 py-3 text-[17px] text-ink" role="alert">{recError}</p>}
+      {notice && <p className="mt-3 rounded-2xl border border-line bg-card2 px-4 py-3 text-[17px] text-ink" role="alert">{notice}</p>}
 
       {items.length > 0 && (
-        <ol className="mt-6 divide-y divide-slate-200 overflow-hidden rounded-xl border border-slate-200" aria-label="Audio in this call">
+        <ol className="mt-6 divide-y divide-line overflow-hidden rounded-2xl border border-line" aria-label="Audio in this call">
           {items.map((it, i) => (
-            <li key={it.id} className="flex items-center gap-2 bg-white px-3 py-2.5 sm:gap-3 sm:px-4">
-              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-accent-soft text-[15px] font-bold text-accent" aria-hidden="true">{i + 1}</span>
+            <li key={it.id} className="flex items-center gap-2 bg-card2/50 px-3 py-2.5 sm:gap-3 sm:px-4">
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-accent text-[15px] font-extrabold text-accent-ink" aria-hidden="true">{i + 1}</span>
               <div className="min-w-0 flex-1">
-                <div className="truncate text-[17px] font-semibold text-slate-900">{it.name}</div>
-                <div className="text-[17px] text-slate-500">{it.duration !== null ? mmss(it.duration) : '…'}</div>
+                <div className="truncate text-[17px] font-semibold text-ink">{it.name}</div>
+                <div className="text-[17px] text-mute">{it.duration !== null ? mmss(it.duration) : '…'}</div>
               </div>
               <button
                 type="button" className={iconBtn} disabled={!it.url} onClick={() => togglePlay(it)}
@@ -312,10 +312,10 @@ export default function AddCall({
 
       {examples.length > 0 && (
         <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-          <label htmlFor="example" className="text-[17px] text-slate-600">or try an example call</label>
+          <label htmlFor="example" className="text-[17px] text-mute">or try an example call</label>
           <select
             id="example" value={exampleId} onChange={(e) => pickExample(e.target.value)}
-            className="min-w-0 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-[17px] text-slate-800 focus-visible:outline-2 focus-visible:outline-accent"
+            className="min-w-0 rounded-full border border-line bg-card2 px-5 py-3 text-[17px] text-ink focus-visible:outline-2 focus-visible:outline-accent"
           >
             <option value="">Choose an example…</option>
             {examples.map((c) => <option key={c.clip_id} value={c.clip_id}>{c.title ?? c.name}</option>)}
@@ -325,11 +325,11 @@ export default function AddCall({
 
       <button
         type="button" disabled={items.length === 0 || recording} onClick={onSubmit}
-        className="mt-8 w-full rounded-xl bg-accent px-6 py-4 text-xl font-semibold text-white shadow-sm transition hover:bg-indigo-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none sm:w-auto"
+        className="mt-8 w-full rounded-full bg-accent px-10 py-4 text-xl font-extrabold text-accent-ink shadow-[0_0_36px_rgba(209,254,23,0.3)] transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white disabled:bg-card2 disabled:text-mute disabled:shadow-none sm:w-auto"
       >
         Check this call
       </button>
-      {items.length === 0 && <p className="mt-3 text-[17px] text-slate-500">Add at least one audio clip to get started.</p>}
+      {items.length === 0 && <p className="mt-3 text-[17px] text-mute">Add at least one audio clip to get started.</p>}
     </section>
   )
 }

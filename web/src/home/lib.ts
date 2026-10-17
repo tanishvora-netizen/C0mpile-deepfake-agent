@@ -21,46 +21,10 @@ export const errMsg = (e: unknown): string => (e instanceof Error ? e.message : 
 export const VERDICT: Record<Label, { headline: string; tone: Tone }> = {
   synthetic: { headline: 'AI-generated voice', tone: 'danger' },
   bona_fide: { headline: 'Real person', tone: 'ok' },
-  uncertain: { headline: 'Not sure', tone: 'warn' },
+  uncertain: { headline: "Couldn't tell", tone: 'neutral' },
 }
 
-export function overallVerdict(segments: Segment[]): { tone: Tone; text: string; sub?: string } {
-  const n = segments.length
-  const ai = segments.filter((s) => s.label === 'synthetic').length
-  const unsure = segments.filter((s) => s.label === 'uncertain').length
-  if (n === 0) return { tone: 'warn', text: "CallGuard couldn't reach a verdict on this call." }
-  if (ai > 0) {
-    return {
-      tone: 'danger',
-      text: n === 1 ? 'The voice on this call is AI-generated.' : `${ai} of ${n} voices on this call ${ai === 1 ? 'is' : 'are'} AI-generated.`,
-      sub: unsure > 0 ? `${unsure} ${unsure === 1 ? 'voice' : 'voices'} could not be judged.` : undefined,
-    }
-  }
-  if (unsure > 0) {
-    return { tone: 'warn', text: `Not sure about ${unsure} of ${n} ${n === 1 ? 'voice' : 'voices'} on this call.`, sub: 'No voice was flagged as AI-generated.' }
-  }
-  return {
-    tone: 'ok',
-    text: 'No AI-generated voices found.',
-    sub: n === 1 ? 'The voice on this call sounds like a real person.' : `All ${n} voices sound like real people.`,
-  }
-}
-
-// ---------- per-voice details ----------
-/** "Voice 1", "Voice 2", … by order of first appearance of each speaker. */
-export function voiceNames(segments: Segment[]): string[] {
-  const order: string[] = []
-  return segments.map((s, i) => {
-    const key = s.speaker ?? `#${i}`
-    let at = order.indexOf(key)
-    if (at < 0) {
-      order.push(key)
-      at = order.length - 1
-    }
-    return `Voice ${at + 1}`
-  })
-}
-
+// ---------- voices: one card per source file / speaker ----------
 const overlap = (a0: number, a1: number, b0: number, b1: number): number => Math.min(a1, b1) - Math.max(a0, b0)
 
 /** The uploaded file that mostly covers this segment's time range. */
@@ -77,39 +41,161 @@ export function sourceFor(seg: Segment, sources: CallSource[]): CallSource | nul
   return best
 }
 
-/** Each transcript line goes under the one voice card it overlaps the most. */
-export function linesFor(segIdx: number, segments: Segment[], lines: TranscriptLine[] | null): TranscriptLine[] {
+export type VoiceKind = 'ai' | 'human' | 'part' | 'unsure'
+
+export interface Detectors { A: number | null; B: number | null; C: number | null }
+
+export interface Voice {
+  name: string
+  /** indexes into result.segments */
+  idx: number[]
+  segments: Segment[]
+  start: number
+  end: number
+  source: CallSource | null
+  kind: VoiceKind
+  headline: string
+  tone: Tone
+  /** Merged time ranges where the AI was found. */
+  aiRanges: [number, number][]
+  detectors: Detectors | null
+}
+
+/** Time as m:ss, rounded down (for the start of a range). */
+const tFloor = (t: number): string => mmss(Math.floor(Math.max(0, t)))
+/** Time as m:ss, rounded up (for the end of a range). */
+const tCeil = (t: number): string => mmss(Math.ceil(Math.max(0, t)))
+export const rangeText = (r: [number, number]): string => `${tFloor(r[0])}–${tCeil(r[1])}`
+export const aiAtText = (ranges: [number, number][]): string => `AI at ${ranges.map(rangeText).join(', ')}`
+
+const DET_FIELD = /\(([ABC])\)\s*$/
+const DET_TOOLS = new Set(['score_turns', 'score_windows'])
+
+/** Detector A/B/C scores for one segment, read from its evidence. */
+export function detectorScores(seg: Segment): Detectors {
+  const out: Detectors = { A: null, B: null, C: null }
+  for (const ev of seg.evidence ?? []) {
+    if (!DET_TOOLS.has(ev.tool) || typeof ev.value !== 'number') continue
+    const m = DET_FIELD.exec(ev.field)
+    if (!m) continue
+    const k = m[1] as 'A' | 'B' | 'C'
+    if (out[k] === null) out[k] = ev.value
+  }
+  return out
+}
+
+const minScore = (d: Detectors): number => {
+  const v = [d.A, d.B, d.C].filter((x): x is number => x !== null)
+  return v.length ? Math.min(...v) : -1
+}
+
+/** Scores of the voice's segment with the highest min score (null when no detector reported). */
+function bestDetectors(segs: Segment[]): Detectors | null {
+  let best: Detectors | null = null
+  let bestMin = -1
+  for (const s of segs) {
+    const d = detectorScores(s)
+    const m = minScore(d)
+    if (m > bestMin) {
+      bestMin = m
+      best = d
+    }
+  }
+  return best
+}
+
+function mergeRanges(segs: Segment[]): [number, number][] {
+  const ai = segs.filter((s) => s.label === 'synthetic').sort((a, b) => a.start - b.start)
+  const out: [number, number][] = []
+  for (const s of ai) {
+    const last = out[out.length - 1]
+    if (last && s.start - last[1] <= 0.25) last[1] = Math.max(last[1], s.end)
+    else out.push([s.start, s.end])
+  }
+  return out
+}
+
+/**
+ * Groups segments per voice: by source file when we know the files, otherwise by speaker.
+ * A voice that has any AI segment is never called a real person.
+ */
+export function groupVoices(segments: Segment[], sources: CallSource[]): Voice[] {
+  const keys: string[] = []
+  const groups = new Map<string, number[]>()
+  segments.forEach((s, i) => {
+    const src = sourceFor(s, sources)
+    const key = src ? `src:${src.name}:${src.start}` : s.speaker ? `spk:${s.speaker}` : `#${i}`
+    if (!groups.has(key)) {
+      groups.set(key, [])
+      keys.push(key)
+    }
+    groups.get(key)?.push(i)
+  })
+  return keys.map((key, n) => {
+    const idx = groups.get(key) ?? []
+    const segs = idx.map((i) => segments[i])
+    const ai = segs.some((s) => s.label === 'synthetic')
+    const human = segs.some((s) => s.label === 'bona_fide')
+    const allAi = segs.every((s) => s.label === 'synthetic')
+    let kind: VoiceKind
+    let headline: string
+    let tone: Tone
+    if (allAi) {
+      kind = 'ai'; headline = 'AI-generated voice'; tone = 'danger'
+    } else if (ai) {
+      kind = 'part'; headline = human ? 'Part human, part AI' : 'Part AI, part unclear'; tone = 'warn'
+    } else if (human && !segs.some((s) => s.label === 'uncertain')) {
+      kind = 'human'; headline = 'Real person'; tone = 'ok'
+    } else {
+      kind = 'unsure'; headline = "Couldn't tell — try a longer recording"; tone = 'neutral'
+    }
+    return {
+      name: `Voice ${n + 1}`, idx, segments: segs,
+      start: Math.min(...segs.map((s) => s.start)), end: Math.max(...segs.map((s) => s.end)),
+      source: sourceFor(segs[0], sources), kind, headline, tone,
+      aiRanges: mergeRanges(segs), detectors: bestDetectors(segs),
+    }
+  })
+}
+
+export function overallVerdict(segments: Segment[], voices: Voice[]): { tone: Tone; text: string; sub?: string } {
+  const n = voices.length
+  if (segments.length === 0 || n === 0) return { tone: 'neutral', text: "CallGuard couldn't reach a verdict on this call." }
+  const nAi = voices.filter((v) => v.kind === 'ai').length
+  const nPart = voices.filter((v) => v.kind === 'part').length
+  const nUnsure = voices.filter((v) => v.kind === 'unsure').length
+  if (segments.some((s) => s.label === 'synthetic')) {
+    const bits: string[] = []
+    if (nAi) bits.push(n === 1 ? 'The voice is AI' : `${nAi} of ${n} voices ${nAi === 1 ? 'is' : 'are'} AI`)
+    if (nPart) bits.push(n === 1 ? 'the voice is part AI' : `${nPart} ${nPart === 1 ? 'is' : 'are'} part AI`)
+    const sub = bits.join(', ')
+    return { tone: 'danger', text: 'This call contains AI-generated speech', sub: sub[0].toUpperCase() + sub.slice(1) }
+  }
+  return {
+    tone: 'ok',
+    text: 'No AI-generated speech found',
+    sub: nUnsure > 0
+      ? `Couldn't tell for ${nUnsure} of ${n} ${n === 1 ? 'voice' : 'voices'}.`
+      : n === 1 ? 'The voice sounds like a real person.' : `All ${n} voices sound like real people.`,
+  }
+}
+
+/** Each transcript line goes under the one voice whose segments it overlaps the most. */
+export function linesForVoice(voiceIdx: number, voices: Voice[], lines: TranscriptLine[] | null): TranscriptLine[] {
   if (!lines || !lines.length) return []
   return lines.filter((l) => {
     let best = -1
     let bestOv = -Infinity
-    segments.forEach((s, i) => {
-      const ov = overlap(l.start, l.end, s.start, s.end)
+    voices.forEach((v, i) => {
+      const ov = v.segments.reduce((m, s) => m + Math.max(0, overlap(l.start, l.end, s.start, s.end)), 0)
       if (ov > bestOv) {
         bestOv = ov
         best = i
       }
     })
-    return best === segIdx
+    return best === voiceIdx
   })
 }
-
-export interface DetectorScores { A: number | null; B: number | null }
-
-/** The two detector scores out of segment.evidence ("(A)" / "(B)" fields). */
-export function detectorScores(seg: Segment): DetectorScores {
-  const out: DetectorScores = { A: null, B: null }
-  for (const ev of seg.evidence ?? []) {
-    if (ev.tool !== 'score_turns' || typeof ev.value !== 'number') continue
-    const f = ev.field
-    if (out.A === null && /\(A\)|_A$|^A$|detector[\s_]?A\b/i.test(f)) out.A = ev.value
-    else if (out.B === null && /\(B\)|_B$|^B$|detector[\s_]?B\b/i.test(f)) out.B = ev.value
-  }
-  return out
-}
-
-export const detectorsDisagree = (d: DetectorScores): boolean =>
-  d.A !== null && d.B !== null && (d.A >= 0.5) !== (d.B >= 0.5)
 
 /** Result of the closer look (rescore) CallGuard took on this voice, if any. */
 export function closerLook(seg: Segment): number | null {
