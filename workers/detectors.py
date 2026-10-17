@@ -7,6 +7,7 @@ one macOS voice ("Ralph"). Weights come from the Hugging Face Hub on first use, 
 """
 from __future__ import annotations
 
+import contextlib
 import threading
 
 import numpy as np
@@ -20,7 +21,9 @@ MODELS = {
 CHUNK_S = 30.0  # score each voice in one pass; short tail chunks made detector B misfire
 
 _load_lock = threading.Lock()
-_gpu_lock = threading.Lock()  # one GPU queue: detectors take turns, but each pass is ~2.4x faster than CPU
+# Metal aborts the process if two threads touch the GPU at once (seen: model load during inference),
+# so every GPU step, loading included, goes through this one re-entrant lock. ~2.4x faster than CPU.
+_gpu_lock = threading.RLock()
 _model_locks = {det: threading.Lock() for det in MODELS}  # on CPU, A, B and C run side by side
 _loaded: dict[str, tuple] = {}
 _device: str | None = None
@@ -48,8 +51,12 @@ def available() -> bool:
     return True
 
 
+def _gpu_guard():
+    return _gpu_lock if device() != "cpu" else contextlib.nullcontext()
+
+
 def _load(detector: str) -> tuple:
-    with _load_lock:
+    with _gpu_guard(), _load_lock:
         return _load_unlocked(detector)
 
 
@@ -84,11 +91,11 @@ def p_fake(x: np.ndarray, detector: str) -> float:
     """Probability that this 16 kHz mono float audio is AI-generated, per one detector."""
     import torch
 
-    fe, model, fake_idx = _load(detector)
     dev = device()
     lock = _gpu_lock if dev != "cpu" else _model_locks[detector]
     total, weight = 0.0, 0
     with lock:
+        fe, model, fake_idx = _load(detector)
         for chunk in _chunks(np.asarray(x, dtype=np.float32)):
             inputs = {k: v.to(dev) for k, v in fe(chunk, sampling_rate=SR, return_tensors="pt").items()}
             with torch.inference_mode():
